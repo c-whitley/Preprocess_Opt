@@ -28,4 +28,10 @@ paramList={
                             }
             }
 
-bfg = pp.BruteForceGenerator()
+bfg = pp.BruteForceGenerator(paramList).gen
+
+print(next(bfg))
+
+print(next(bfg))
+
+print(next(bfg))

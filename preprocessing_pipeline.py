@@ -15,7 +15,8 @@ from sklearn.ensemble import RandomForestClassifier as RF
 from sklearn import model_selection 
 from sklearn import metrics 
 
-from .methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils
+from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils
+
 
 class Pipeline_Creator:
 
@@ -62,11 +63,18 @@ class Pipeline_Creator:
 
             self.X_t = pd.DataFrame(self.X_t, columns = cols, index = X.index)
 
-        
-
-    #method that appends a classifer to the end of the pipeline and runs a trial 
     def trial(self, X, y, pos, **kwargs):
+        """
+        Method that appends a classifer to the end of the pipeline and runs a trial
 
+        Args:
+            X ([type]): [description]
+            y ([type]): [description]
+            pos ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """        
         self.X = X
 
         #split object of module 'sklearn.model_selection'
@@ -88,17 +96,6 @@ class Pipeline_Creator:
 
         return scores
 
-            
-            #for i,(tr, te) in enumerate(self.ind_gen): 
-                
-                #cl.fit(self.X.iloc[tr,:], y[tr])
-                #y_pred = cl.predict(self.X.iloc[te])
-                
-
-                
-                #print('Run {} recall = '.format(i+1), metrics.recall_score(y[te], y_pred, pos_label=poslabel))
-
-
 
     def Split(self, split_ob, y = 'Class', group = 'patient', **kwargs): 
         #method which splits the data into training and testing
@@ -117,24 +114,19 @@ class Pipeline_Creator:
             self.ind_gen = split_ob.split(self.X, self.X.index.get_level_values(y), self.X.index.get_level_values(group))
 
 
-class BruceForceGenerator:
+class BruteForceGenerator:
     """
     Class for the bruce force generation of pipelines.
     """    
 
-    def __init__(self, paramList):
+    def __init__(self, paramList, **kwargs):
 
         self.paramList = paramList
         self.order = kwargs.get('order',['binning','smoothing','normalise','baseline','FeaExtraction', 'Classifier'])
+        self.gen = self.get_addresses()
+        
 
-
-    def AddressGenerator(): 
-
-        reordered = collections.OrderedDict({key: self.paramList[key] for key in order})
-
-        return self.process_(reordered)
-
-    def get_options(input_dict):
+    def get_options(self, input_dict):
 
         for step, functions in input_dict.items():
             for function, kw_dict in functions.items():
@@ -156,7 +148,9 @@ class BruceForceGenerator:
                         yield [step, function, kwargs]
 
 
-    def process_(input_dict):
+    def get_addresses(self):
+
+        input_dict = collections.OrderedDict({key: self.paramList[key] for key in self.order})
 
         # Get list of possible permutations
         permutations = list(self.get_options(input_dict))
@@ -187,4 +181,3 @@ class BruceForceGenerator:
 
             # Return permutations one at a time
             yield {step: sorted_perms[step][perm] for step, perm in zip(ls, address)}
-
