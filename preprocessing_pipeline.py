@@ -117,93 +117,74 @@ class Pipeline_Creator:
             self.ind_gen = split_ob.split(self.X, self.X.index.get_level_values(y), self.X.index.get_level_values(group))
 
 
-def AddressGenerator(**kwargs): 
+class BruceForceGenerator:
+    """
+    Class for the bruce force generation of pipelines.
+    """    
 
-    #return iterable which changes method and inner parameters on each step. 
-    order = kwargs.get('order',['binning','smoothing','normalise','baseline','FeaExtraction', 'Classifier'])
+    def __init__(self, paramList):
 
-
-    paramList={
-                'binning'   : {'doNothing':{},
-                                'MeanBin'  :{'factor': [2,4,8]}
-                                },
-                'smoothing' : {'doNothing':{},
-                                'savgol'   :{'window':[5, 7, 9, 11], 'polyorder':[3, 4, 5]},
-                                'PCA'      :{'nc':[5, 10, 20]}
-                                },
-                'normalise' : { 'vector'   :{},
-                                'min_max'  :{},
-                                'feature'  :{}
-                                },
-                'baseline'  : {'doNothing':{},
-                                'sg_diff'  :{'window':[5, 7, 9, 11], 'polyorder':[3, 4, 5], 'order':[1, 2]}
-                                },
-                'FeaExtraction': {'doNothing':{},
-                                    'PCA'      :{'n_components': [3, 5, 10]},
-                                    'LDA'      :{'n_components': [1]}
-                                },
-                'Classifier': {'LogisticRegression': {},
-                                'Random Forest': {},
-                                'Naive Bayes': {},
-                                }
-
-                }
-
-    reordered = collections.OrderedDict({key: paramList[key] for key in order})
-
-    return process_(reordered)
-
-def get_options(input_dict):
-
-    for step, functions in input_dict.items():
-        for function, kw_dict in functions.items():
-            if len(kw_dict)==0:
-                
-                # Yield the step with no keyword arguments
-                yield [step, function, {}]
-
-            # Check if we're down to the level of the parameter values
-            elif all([isinstance(vals, list) for vals in kw_dict.values()]):
-
-                # Get all of the possible combinations for the function's arguments
-                combos = np.array(np.meshgrid(*kw_dict.values())).reshape(len(kw_dict.values()),-1).T
-
-                for combination in combos:
-
-                    kwargs = dict(zip(kw_dict.keys() ,combination))
-
-                    yield [step, function, kwargs]
+        self.paramList = paramList
+        self.order = kwargs.get('order',['binning','smoothing','normalise','baseline','FeaExtraction', 'Classifier'])
 
 
-def process_(input_dict):
+    def AddressGenerator(): 
 
-    # Get list of possible permutations
-    permutations = list(get_options(input_dict))
+        reordered = collections.OrderedDict({key: self.paramList[key] for key in order})
 
-    # Count how many different permutations are in each step
-    func_counts = [f[0] for f in permutations]
-    ls=[p[0] for p in permutations]
-    lookup = set()
-    ls = [x for x in ls if x not in lookup and lookup.add(x) is None]
+        return self.process_(reordered)
+
+    def get_options(input_dict):
+
+        for step, functions in input_dict.items():
+            for function, kw_dict in functions.items():
+                if len(kw_dict)==0:
+                    
+                    # Yield the step with no keyword arguments
+                    yield [step, function, {}]
+
+                # Check if we're down to the level of the parameter values
+                elif all([isinstance(vals, list) for vals in kw_dict.values()]):
+
+                    # Get all of the possible combinations for the function's arguments
+                    combos = np.array(np.meshgrid(*kw_dict.values())).reshape(len(kw_dict.values()),-1).T
+
+                    for combination in combos:
+
+                        kwargs = dict(zip(kw_dict.keys() ,combination))
+
+                        yield [step, function, kwargs]
 
 
-    n_params = {step: func_counts.count(step) for step in ls}
+    def process_(input_dict):
 
-    # Generate all possible addresses for each permutation
-    addresses = np.array(list(itertools.product(*[np.arange(int(c)) for c in n_params.values()]))).squeeze()
+        # Get list of possible permutations
+        permutations = list(self.get_options(input_dict))
 
-    ls=[p[0] for p in permutations]
-    lookup = set()
-    ls = [x for x in ls if x not in lookup and lookup.add(x) is None]
+        # Count how many different permutations are in each step
+        func_counts = [f[0] for f in permutations]
+        ls=[p[0] for p in permutations]
+        lookup = set()
+        ls = [x for x in ls if x not in lookup and lookup.add(x) is None]
 
-    sorted_perms = collections.OrderedDict(((step, [perm for perm in permutations if perm[0]==step]) for step in ls))
+
+        n_params = {step: func_counts.count(step) for step in ls}
+
+        # Generate all possible addresses for each permutation
+        addresses = np.array(list(itertools.product(*[np.arange(int(c)) for c in n_params.values()]))).squeeze()
+
+        ls=[p[0] for p in permutations]
+        lookup = set()
+        ls = [x for x in ls if x not in lookup and lookup.add(x) is None]
+
+        sorted_perms = collections.OrderedDict(((step, [perm for perm in permutations if perm[0]==step]) for step in ls))
 
 
-    for i in range(addresses.shape[0]):
+        for i in range(addresses.shape[0]):
 
-        # Get an address for the permutation from the complete list
-        address = addresses[i,:]
+            # Get an address for the permutation from the complete list
+            address = addresses[i,:]
 
-        # Return permutations one at a time
-        yield {step: sorted_perms[step][perm] for step, perm in zip(ls, address)}
+            # Return permutations one at a time
+            yield {step: sorted_perms[step][perm] for step, perm in zip(ls, address)}
 
