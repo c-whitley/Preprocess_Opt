@@ -17,10 +17,13 @@ from sklearn import metrics
 
 from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils
 
-
-class Pipeline_Creator:
+class Pipeline:
+    """[summary]
+    """    
 
     def __init__(self):
+        """[summary]
+        """        
 
         self.mods = {
             'binning':binning, 
@@ -32,7 +35,11 @@ class Pipeline_Creator:
         }
 
     def make_pipeline(self, address):
+        """[summary]
 
+        Args:
+            address ([type]): [description]
+        """
         #input an dictionary indicating which method and parameter to use for each step         
         
         pipeline_list=[]
@@ -48,7 +55,12 @@ class Pipeline_Creator:
             self.pipeline = Pipeline(pipeline_list)
 
     def transform_data(self, X, y):
+        """[summary]
 
+        Args:
+            X ([type]): [description]
+            y ([type]): [description]
+        """        
          
         self.X_t = self.pipeline.fit_transform(X, y)
 
@@ -98,10 +110,18 @@ class Pipeline_Creator:
 
 
     def Split(self, split_ob, y = 'Class', group = 'patient', **kwargs): 
-        #method which splits the data into training and testing
+        """        
+        Method which splits the data into training and testing.
+        KFoldGroup is custom written splitter that splits into partitions with unique groups i.e. no same patient in two partitions.
 
-        #KFoldGroup is custom written splitter that splits into partitions with unique groups i.e. no same patient in two partitions.
-        
+
+        Args:
+            split_ob ([type]): [description]
+            y (str, optional): [description]. Defaults to 'Class'.
+            group (str, optional): [description]. Defaults to 'patient'.
+        """        """
+
+        """        
         
         
         if split_ob == 'KFoldGroup':
@@ -113,20 +133,38 @@ class Pipeline_Creator:
         else: 
             self.ind_gen = split_ob.split(self.X, self.X.index.get_level_values(y), self.X.index.get_level_values(group))
 
+#----------------------------------------------------------------------------------------------------------------------------------
 
 class BruteForceGenerator:
     """
     Class for the bruce force generation of pipelines.
+
+    Yields:
+        [type]: [description]
+    """    """
+    
     """    
 
     def __init__(self, paramList, **kwargs):
+        """[summary]
 
+        Args:
+            paramList ([type]): [description]
+        """
         self.paramList = paramList
         self.order = kwargs.get('order',['binning','smoothing','normalise','baseline','FeaExtraction', 'Classifier'])
         self.gen = self.get_addresses()
         
 
     def get_options(self, input_dict):
+        """[summary]
+
+        Args:
+            input_dict ([type]): [description]
+
+        Yields:
+            [type]: [description]
+        """
 
         for step, functions in input_dict.items():
             for function, kw_dict in functions.items():
@@ -149,6 +187,12 @@ class BruteForceGenerator:
 
 
     def get_addresses(self):
+
+        """[summary]
+
+        Yields:
+            [type]: [description]
+        """        
 
         input_dict = collections.OrderedDict({key: self.paramList[key] for key in self.order})
 
