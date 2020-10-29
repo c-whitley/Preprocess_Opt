@@ -9,10 +9,15 @@ from .utils import find_value_num
 #X is a pandas dataframe, can have multi-indexing and wavenumber titled columns 
 def MakeTransformer(method, **kwargs):
 
-    transformers = getTransformers()
+    transformers = {
+            'doNothing': doNothing,
+            'vector': vector,
+            'min_max': min_max,
+            'feature': feature,
+            }
 
     return FunctionTransformer(transformers[method], kw_args=kwargs)
-    
+'''    
 def getTransformers():  
 
     return {
@@ -21,7 +26,7 @@ def getTransformers():
             'min_max': min_max,
             'feature': feature,
             }
-
+'''
 def doNothing(X, y=None, **kwargs):
     return X
 

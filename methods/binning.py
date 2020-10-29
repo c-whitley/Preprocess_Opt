@@ -5,17 +5,21 @@ from sklearn.preprocessing import FunctionTransformer
 
 def MakeTransformer(method, **kwargs): 
 
-    transformers = getTransformers()
+    transformers = {
+            'doNothing': FunctionTransformer(doNothing, kw_args = kwargs),
+            'MeanBin': FunctionTransformer(MeanBin, kw_args = kwargs)
+            }
 
-    return FunctionTransformer(transformers[method], kw_args=kwargs)
+    return transformers[method]
 
+'''
 def getTransformers():
 
     return {
             'doNothing': doNothing,
             'MeanBin': MeanBin
             }
-            
+'''            
 def doNothing(X, y = None, **kwargs): 
 
     return X

@@ -8,9 +8,14 @@ from sklearn.decomposition import PCA
 
 def MakeTransformer(method, **kwargs):
 
-    transformers = getTransformers()
+    transformers = {
+            'doNothing':doNothing,
+            'savgol':savgol,
+            'wavelet':wavelet,
+            'PCA':PCA_smooth
+            } 
     return FunctionTransformer(transformers[method], kw_args = kwargs)
-
+'''
 def getTransformers(): 
     return {
             'doNothing':doNothing,
@@ -18,7 +23,7 @@ def getTransformers():
             'wavelet':wavelet,
             'PCA':PCA_smooth
             } 
-
+'''
 def doNothing(X, y = None, **kwargs): 
     return X
 

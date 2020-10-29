@@ -25,7 +25,8 @@ def getTransformers():
 def doNothing(X,y=None,**kwargs):
 
     return X
-    
+
+'''   
 def pca(X, y= None, **kwargs):
 
     nc = kwargs.get('nc',3)
@@ -42,5 +43,5 @@ def lda(X, y, **kwargs):
     X_transform = lda_model.fit_transform(X.values, y)
     cols = ["LD{:d}".format(i+1) for i in range(X_transform.shape[1])]
     return pd.DataFrame(X_transform, index=X.index, columns=cols)
-
+'''
     
