@@ -22,9 +22,9 @@ class Rubber_Band( BaseEstimator, TransformerMixin ):
         self.n_jobs = n_jobs
    
 
-    def transform(self, y):
+    def transform(self, X, y=None):
 
-        return self.y - self.baseline
+        return self.X - self.baseline
 
     @ray.remote
     def rubberband_baseline(spectrum):
@@ -44,14 +44,14 @@ class Rubber_Band( BaseEstimator, TransformerMixin ):
         return baseline
 
 
-    def fit(self, y):
+    def fit(self, X, y=None):
 
         # Initialise ray with the number of cores specified
         ray.init(num_cpus=self.n_jobs)
-        self.y=y
+        self.X=X
 
         # Get the baseline matrix from the ray jobs
         self.baseline = np.array(ray.get([self.rubberband_baseline.remote(i) 
-        for i in np.apply_along_axis(lambda row: row, axis = 0, arr=self.y)]))
+        for i in np.apply_along_axis(lambda row: row, axis = 0, arr=self.X)]))
 
         return self

@@ -24,6 +24,7 @@ class Pipeline_Opt:
     def __init__(self, address):
         """[summary]
         """        
+        self.address = address
 
         self.mods = {
             'binning':binning, 
@@ -66,8 +67,10 @@ class Pipeline_Opt:
             X ([type]): [description]
             y ([type]): [description]
         """        
-         
-        self.X_t = self.pipeline.fit_transform(X, y)
+        temp =  Pipeline(self.pipeline.steps[0:5])
+        print(temp)
+        self.X_t = temp.fit_transform(X, y)
+        #self.X_t = self.pipeline.fit_transform(X, y)
 
         if not(isinstance(self.X_t, pd.DataFrame)):
 
