@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd 
 from scipy.signal import savgol_filter
 from sklearn.preprocessing import FunctionTransformer
-from Rubberband import Rubber_Band
+from .Rubberband import Rubber_Band
 
 def MakeTransformer(method, **kwargs): 
     transformers = {
