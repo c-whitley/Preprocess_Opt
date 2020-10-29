@@ -21,7 +21,7 @@ class Pipeline_Opt:
     """[summary]
     """    
 
-    def __init__(self):
+    def __init__(self, address):
         """[summary]
         """        
 
@@ -34,7 +34,10 @@ class Pipeline_Opt:
             'Classifier': Classifier
         }
 
-    def make_pipeline(self, address):
+        self.make_pipeline()
+
+
+    def make_pipeline(self):
         """[summary]
 
         Args:
@@ -42,9 +45,10 @@ class Pipeline_Opt:
         """
         #input an dictionary indicating which method and parameter to use for each step         
         
-        pipeline_list=[]
+        pipeline_list = []
         transformer = []
-        for k, v in address.items():
+        
+        for k, v in self.address.items():
             transformer = []
             transformer.append(k)
             
@@ -53,6 +57,7 @@ class Pipeline_Opt:
             pipeline_list.append(tuple(transformer))
             
             self.pipeline = Pipeline(pipeline_list)
+
 
     def transform_data(self, X, y):
         """[summary]
@@ -74,6 +79,7 @@ class Pipeline_Opt:
             cols = ["{} {}".format(lab, i) for i in range(1, self.pipeline.get_params().get('FeaExtraction__n_components')+1)]
 
             self.X_t = pd.DataFrame(self.X_t, columns = cols, index = X.index)
+
 
     def trial(self, X, y, pos, **kwargs):
         """
@@ -114,15 +120,11 @@ class Pipeline_Opt:
         Method which splits the data into training and testing.
         KFoldGroup is custom written splitter that splits into partitions with unique groups i.e. no same patient in two partitions.
 
-
         Args:
             split_ob ([type]): [description]
             y (str, optional): [description]. Defaults to 'Class'.
             group (str, optional): [description]. Defaults to 'patient'.
-        """        """
-
-        """        
-        
+        """
         
         if split_ob == 'KFoldGroup':
 

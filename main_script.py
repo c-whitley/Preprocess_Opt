@@ -1,5 +1,6 @@
 import numpy as np 
-import pandas as pd 
+import pandas as pd
+import os
 
 import preprocessing_pipeline as pp 
 
@@ -28,10 +29,16 @@ paramList={
                             }
             }
 
-bfg = pp.BruteForceGenerator(paramList).gen
+if not os.path.exists('./input'):
+    os.mkdir('./input')
 
-print(next(bfg))
 
-print(next(bfg))
 
-print(next(bfg))
+# Create loop to make input files for each pipeline
+for i, pipe_address in enumerate(pp.BruteForceGenerator(paramList).gen):
+
+    if i > 10:
+
+        break
+
+    pp.Pipeline(pipe_address)
