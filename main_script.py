@@ -37,8 +37,4 @@ if not os.path.exists('./input'):
 # Create loop to make input files for each pipeline
 for i, pipe_address in enumerate(pp.BruteForceGenerator(paramList).gen):
 
-    if i > 10:
-
-        break
-
     pp.Pipeline(pipe_address)

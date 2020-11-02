@@ -53,7 +53,7 @@ class Condor_Job_Pipeline:
 
     def submission_file(self):
 
-        with open(os.path.join(self.jobdir, "condor_scorer"), "w") as file:
+        with open(os.path.join(self.jobdir, "submission_file"), "w") as file:
 
             file.write(f"python_script = {self.function}\n")
             file.write(f"python_version = python_3.7.4\n")

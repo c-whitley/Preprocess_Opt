@@ -91,6 +91,12 @@ class Kohler( BaseEstimator, TransformerMixin):
 
     def fit(self, y):
 
+        # Use the columns of the dataframe as the wavenumbers
+        self.wavenumbers = y.columns
+
+        # Use the mean as reference spectrm
+        self.ref = y.mean(axis=0)
+
         if self.n_jobs not None:
 
             # Initialise ray with the number of cores specified
@@ -98,13 +104,13 @@ class Kohler( BaseEstimator, TransformerMixin):
             self.y=y
 
             # Get the baseline matrix from the ray jobs
-            self.baseline = np.array(ray.get([self.Kohler.remote(i) 
-            for i in np.apply_along_axis(lambda row: row, axis = 0, arr=self.y)]))
+            self.baseline = np.array(ray.get([self.Kohler.remote(self.wavenumbers, spectrum, self.ref) 
+            for spectrum in np.apply_along_axis(lambda row: row, axis = 0, arr=self.y)]))
 
             return self
 
         else:
-            np.apply_along_axis(self.Kohler, axis = 0, arr=self.y)
+            self.baseline = np.array([self.Kohler(self.wavenumbers, spectrum, self.ref) for i in ])
 
 def konevskikh_parameters(a, n0, f):
     """

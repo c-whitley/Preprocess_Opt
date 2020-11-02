@@ -22,9 +22,9 @@ class Rubber_Band( BaseEstimator, TransformerMixin ):
         self.n_jobs = n_jobs
    
 
-    def transform(self, y):
+    def transform(self, X, y=None):
 
-        return self.y - self.baseline
+        return self.X - self.baseline
 
     @ray.remote
     def rubberband_baseline(spectrum):
@@ -44,7 +44,7 @@ class Rubber_Band( BaseEstimator, TransformerMixin ):
         return baseline
 
 
-    def fit(self, y):
+    def fit(self, X, y=None):
 
         if self.n_jobs not None:
 
