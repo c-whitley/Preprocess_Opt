@@ -7,11 +7,11 @@ from sklearn.ensemble import RandomForestClassifier
 def MakeTransformer(method, **kwargs):
 
     transformers = {
-        'LogisticRegression': LogisticRegression(**kwargs), 
-        'Naive Bayes': GaussianNB(**kwargs),
-        'Random Forest': RandomForestClassifier(**kwargs)
+        'LogisticRegression': LogisticRegression(), 
+        'Naive Bayes': GaussianNB(),
+        'Random Forest': RandomForestClassifier()
     }
 
-    return transformers[method]
+    return transformers[method].set_params(**kwargs)
 
     

@@ -4,17 +4,18 @@ import pywt
 from sklearn.preprocessing import FunctionTransformer
 import pandas as pd
 from sklearn.decomposition import PCA
+from .utils import IdentityTransformer
+from sklearn.base import TransformerMixin, BaseEstimator
 
 
 def MakeTransformer(method, **kwargs):
 
     transformers = {
-            'doNothing':doNothing,
-            'savgol':savgol,
-            'wavelet':wavelet,
-            'PCA':PCA_smooth
+            'doNothing': IdentityTransformer(),
+            'savgol':savgol(),
+            'PCA':PCA_smooth()
             } 
-    return FunctionTransformer(transformers[method], kw_args = kwargs)
+    return transformers[method].set_params(**kwargs)
 '''
 def getTransformers(): 
     return {
@@ -24,24 +25,54 @@ def getTransformers():
             'PCA':PCA_smooth
             } 
 '''
-def doNothing(X, y = None, **kwargs): 
-    return X
 
-def savgol(X, y = None, **kwargs):
+class savgol(TransformerMixin, BaseEstimator):
 
-    window = kwargs.get('window', 7)
-    polyorder = kwargs.get('polyorder',3)
+    def __init__(self, window = 7, polyorder = 3, **kwargs): 
 
-    X = pd.DataFrame(savgol_filter(X.values, window, polyorder), index = X.index, columns = X.columns)
+        self.window = window
+        self.polyorder = polyorder
 
-    return X
+    def fit(self, X, y = None): 
 
+        return self
+
+    def transform(self, X, y = None):
+
+        return pd.DataFrame(savgol_filter(X.values, self.window, self.polyorder), index = X.index, columns = X.columns)
+
+
+class PCA_smooth(TransformerMixin, BaseEstimator): 
+
+    def __init__(self, num_components = 0.9, **kwargs):
+
+        self.num_components = num_components
+
+    def fit(self, X, y = None):
+
+        return self
+
+    def transform(self, X, y = None): 
+
+        pca = PCA(n_components = self.num_components)
+
+        X_pca = pca.fit_transform(X)
+
+        X_pca = pca.inverse_transform(X_pca)
+
+        X_pca = pd.DataFrame(X_pca, index = X.index, columns = X.columns)
+
+        return X_pca
+
+
+'''
 def wavelet(X, y = None, **kwargs): 
 
     wavelet = kwargs.get('wavelet','db1')
     X = pd.DataFrame(pywt.dwt(X, wavelet)[0], index = X.index, columns = X.columns[range(len(X.columns))[0::2]])
 
     return X
+
 
 def PCA_smooth(X, y = None, **kwargs):
 
@@ -56,6 +87,6 @@ def PCA_smooth(X, y = None, **kwargs):
     X_pca = pd.DataFrame(X_pca, index = X.index, columns = X.columns)
 
     return X_pca
-
+'''
 
 
