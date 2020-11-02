@@ -3,17 +3,18 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.preprocessing import FunctionTransformer
+from .utils import IdentityTransformer
 
 
 def MakeTransformer(method, **kwargs):
 
     transformers = {
-        'doNothing': FunctionTransformer(doNothing),
-        'PCA': PCA(**kwargs),
-        'LDA': LinearDiscriminantAnalysis(**kwargs)
+        'doNothing': IdentityTransformer(),
+        'PCA': PCA(),
+        'LDA': LinearDiscriminantAnalysis()
     }
     
-    return transformers[method]
+    return transformers[method].set_params(**kwargs)
     #return FunctionTransformer(transformers[method], kw_args=kwargs)
 
 '''
@@ -22,9 +23,6 @@ def getTransformers():
     return 
 '''
 
-def doNothing(X,y=None,**kwargs):
-
-    return X
 
 '''   
 def pca(X, y= None, **kwargs):

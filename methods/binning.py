@@ -1,32 +1,35 @@
 import numpy as np 
 import pandas as pd
 from sklearn.preprocessing import FunctionTransformer
-
+from sklearn.base import BaseEstimator, TransformerMixin
+from .utils import IdentityTransformer
 
 def MakeTransformer(method, **kwargs): 
 
     transformers = {
-            'doNothing': FunctionTransformer(doNothing, kw_args = kwargs),
-            'MeanBin': FunctionTransformer(MeanBin, kw_args = kwargs)
+            'doNothing': IdentityTransformer(),
+            'MeanBin': SpectralBinning()
             }
+    
+    return transformers[method].set_params(**kwargs)
 
-    return transformers[method]
+class SpectralBinning(TransformerMixin, BaseEstimator):
 
-'''
-def getTransformers():
+    def __init__(self, factor = 2, **kwargs):
 
-    return {
-            'doNothing': doNothing,
-            'MeanBin': MeanBin
-            }
-'''            
-def doNothing(X, y = None, **kwargs): 
+        self.factor = factor
 
-    return X
+    def fit(self, X, y = None): 
+        
+        return self
 
-def MeanBin(X, y = None, **kwargs): 
+    def transform(self, X, y = None):
+        
+        return MeanBin(X, self.factor)
 
-    factor = kwargs.get('factor', 2)
+
+def MeanBin(X, factor): 
+
     ncol_new = X.shape[1]//factor
     overflow = X.shape[1]%factor
     X_new = np.empty((X.shape[0],ncol_new))
@@ -38,7 +41,7 @@ def MeanBin(X, y = None, **kwargs):
         col_new[i] = np.round(np.mean(X.columns[i*factor:(i*factor+(factor-1))]))
 
     if overflow != 0:
-        print('overflow = ', overflow) 
+        #print('overflow = ', overflow) 
         i += 1
         
         X_new = np.append(X_new, np.mean(X.iloc[:, i*factor:].values, axis = 1).reshape(-1,1), axis = 1)

@@ -83,6 +83,8 @@ class Pipeline_Opt:
 
             self.X_t = pd.DataFrame(self.X_t, columns = cols, index = X.index)
 
+        return self.X_t
+
 
     def trial(self, X, y, pos, **kwargs):
         """
