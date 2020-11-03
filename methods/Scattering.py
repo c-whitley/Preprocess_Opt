@@ -25,7 +25,7 @@ class Kohler( BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
 
-        return self.baseline
+        return pd.DataFrame(self.baseline, index = X.index, columns = X.columns)
 
     @ray.remote
     def Kohler_fit(self, wavenumbers, App, m0):
@@ -95,6 +95,7 @@ class Kohler( BaseEstimator, TransformerMixin):
 
         # Use the columns of the dataframe as the wavenumbers
         self.wavenumbers = X.columns
+
         self.X=X
 
         #print(self.X[0,:].shape)
