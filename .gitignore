@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 settings.json
 test.py
+
+data.hdf
+test_nb.ipynb

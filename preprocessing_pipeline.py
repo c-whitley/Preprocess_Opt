@@ -15,7 +15,7 @@ from sklearn.ensemble import RandomForestClassifier as RF
 from sklearn import model_selection 
 from sklearn import metrics 
 
-from .methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils
+from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils
 
 class Pipeline_Opt:
     """[summary]

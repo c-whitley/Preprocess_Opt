@@ -3,6 +3,7 @@ import pandas as pd
 import os
 
 import preprocessing_pipeline as pp 
+from methods import *
 
 paramList={
             'binning'   : {'doNothing':{},
@@ -37,4 +38,9 @@ if not os.path.exists('./input'):
 # Create loop to make input files for each pipeline
 for i, pipe_address in enumerate(pp.BruteForceGenerator(paramList).gen):
 
-    pp.Pipeline(pipe_address)
+    print(pipe_address)
+
+    pp.Pipeline_Opt(pipe_address)
+
+    if i >10:
+        break

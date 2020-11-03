@@ -5,7 +5,8 @@ import ray
 from sklearn.base import BaseEstimator, TransformerMixin
 
 import scipy.optimize
-import sklearn.decomposition as skl_decomposition, PCA
+import sklearn.decomposition as skl_decomposition
+from sklearn.decomposition import PCA
 from scipy.signal import hilbert
 from scipy.spatial import ConvexHull
 
@@ -16,17 +17,18 @@ class Kohler( BaseEstimator, TransformerMixin):
     Must be supplied as a shape (n_samples, n_wavenumbers)
     """
 
-    def __init__(self, n_jobs = None):
+    def __init__(self, n_jobs = None, **kwargs):
 
         self.n_jobs = n_jobs
+        self.n_components = kwargs.get('n_components', 8)
    
 
-    def transform(self, y):
+    def transform(self, X, y=None):
 
         return self.baseline
 
     @ray.remote
-    def Kohler(wavenumbers, App, m0, n_components=8):
+    def Kohler_fit(self, wavenumbers, App, m0):
         """
         Correct scattered spectra using Kohler's algorithm
         :param wavenumbers: array of wavenumbers
@@ -47,7 +49,7 @@ class Kohler( BaseEstimator, TransformerMixin):
 
         # Initialize the alpha parameter:
         alpha = np.linspace(3.14, 49.95, 150) * 1.0e-4  # alpha = 2 * pi * d * (n - 1) * wavenumber
-        p0 = np.ones(2 + n_components)  # Initialize the initial guess for the fitting
+        p0 = np.ones(2 + self.n_components)  # Initialize the initial guess for the fitting
 
         # # Initialize the extinction matrix:
         Q_ext = np.zeros((np.size(alpha), np.size(wn)))
@@ -55,7 +57,7 @@ class Kohler( BaseEstimator, TransformerMixin):
             Q_ext[i][:] = Q_ext_kohler(wn, alpha=alpha[i])
 
         # Perform PCA of Q_ext:
-        pca = skl_decomposition.IncrementalPCA(n_components=n_components)
+        pca = skl_decomposition.IncrementalPCA(n_components=self.n_components)
         pca.fit(Q_ext)
         p_i = pca.components_  # Extract the principal components
 
@@ -89,28 +91,25 @@ class Kohler( BaseEstimator, TransformerMixin):
         return Z_corr[::-1]  # Return the correction in reverse order for compatibility
 
 
-    def fit(self, y):
+    def fit(self, X, y=None):
 
         # Use the columns of the dataframe as the wavenumbers
-        self.wavenumbers = y.columns
+        self.wavenumbers = X.columns
+        self.X=X
+
+        #print(self.X[0,:].shape)
 
         # Use the mean as reference spectrm
-        self.ref = y.mean(axis=0)
+        self.ref = self.X.mean(axis=0)
 
-        if self.n_jobs not None:
+        # Initialise ray with the number of cores specified
+        ray.init(num_cpus=self.n_jobs)
 
-            # Initialise ray with the number of cores specified
-            ray.init(num_cpus=self.n_jobs)
-            self.y=y
+        # Get the baseline matrix from the ray jobs
+        self.baseline = np.array(ray.get([self.Kohler_fit.remote(self, self.wavenumbers[::-1], spectrum, self.ref) 
+        for spectrum in np.apply_along_axis(lambda row: row, axis = 0, arr=self.X)]))
 
-            # Get the baseline matrix from the ray jobs
-            self.baseline = np.array(ray.get([self.Kohler.remote(self.wavenumbers, spectrum, self.ref) 
-            for spectrum in np.apply_along_axis(lambda row: row, axis = 0, arr=self.y)]))
-
-            return self
-
-        else:
-            self.baseline = np.array([self.Kohler(self.wavenumbers, spectrum, self.ref) for i in ])
+        return self
 
 def konevskikh_parameters(a, n0, f):
     """
