@@ -17,7 +17,7 @@ class Rubber_Band( BaseEstimator, TransformerMixin ):
     Must be supplied as a shape (n_samples, n_wavenumbers)
     """
 
-    def __init__(self, n_jobs = None):
+    def __init__(self, n_jobs = 1):
 
         self.n_jobs = n_jobs
    
@@ -46,17 +46,12 @@ class Rubber_Band( BaseEstimator, TransformerMixin ):
 
     def fit(self, X, y=None):
 
-        if self.n_jobs not None:
+        # Initialise ray with the number of cores specified
+        ray.init(num_cpus=self.n_jobs)
+        self.X=X
 
-            # Initialise ray with the number of cores specified
-            ray.init(num_cpus=self.n_jobs)
-            self.y=y
+        # Get the baseline matrix from the ray jobs
+        self.baseline = np.array(ray.get([self.rubberband_baseline.remote(spectrum) 
+        for spectrumm in np.apply_along_axis(lambda row: row, axis = 0, arr=self.X)]))
 
-            # Get the baseline matrix from the ray jobs
-            self.baseline = np.array(ray.get([self.rubberband_baseline.remote(i) 
-            for i in np.apply_along_axis(lambda row: row, axis = 0, arr=self.y)]))
-
-            return self
-
-        else:
-            np.apply_along_axis(self.Kohler, axis = 0, arr=self.y)
+        return self

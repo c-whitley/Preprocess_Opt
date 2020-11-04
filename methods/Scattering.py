@@ -17,7 +17,7 @@ class Kohler( BaseEstimator, TransformerMixin):
     Must be supplied as a shape (n_samples, n_wavenumbers)
     """
 
-    def __init__(self, n_jobs = None, **kwargs):
+    def __init__(self, n_jobs = 1, **kwargs):
 
         self.n_jobs = n_jobs
         self.n_components = kwargs.get('n_components', 8)
@@ -98,8 +98,7 @@ class Kohler( BaseEstimator, TransformerMixin):
 
         self.X=X
 
-        #print(self.X[0,:].shape)
-
+        
         # Use the mean as reference spectrm
         self.ref = self.X.mean(axis=0)
 
@@ -111,6 +110,10 @@ class Kohler( BaseEstimator, TransformerMixin):
         for spectrum in np.apply_along_axis(lambda row: row, axis = 0, arr=self.X)]))
 
         return self
+
+
+
+        
 
 def konevskikh_parameters(a, n0, f):
     """
