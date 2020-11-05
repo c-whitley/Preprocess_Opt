@@ -1,6 +1,9 @@
 import numpy as np 
 import pandas as pd
 import os
+from tqdm import tqdm 
+
+import dill
 
 import preprocessing_pipeline as pp 
 from methods import *
@@ -30,17 +33,18 @@ paramList={
                             }
             }
 
-if not os.path.exists('./input'):
-    os.mkdir('./input')
+if not os.path.exists('./Input'):
+    os.mkdir('./Input')
 
-
+jobdir = os.getcwd()
 
 # Create loop to make input files for each pipeline
 for i, pipe_address in enumerate(pp.BruteForceGenerator(paramList).gen):
 
-    print(pipe_address)
+    pipe_ob = pp.Pipeline_Opt(pipe_address)
 
-    pp.Pipeline_Opt(pipe_address)
+    pipe_ob.make_pipeline()
 
-    if i >10:
-        break
+    with open(os.path.join(jobdir, 'Input', "pipe{}".format(i)), "wb") as f:
+
+        dill.dump(pipe_ob, f, protocol=4)
