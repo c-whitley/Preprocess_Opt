@@ -42,9 +42,10 @@ class Rubber_Band(TransformerMixin, BaseEstimator):
 
     def __init__(self, num_jobs = 4): 
 
-        self.num_jobs = num_jobs
+        self.n_jobs = num_jobs
 
-    def fit(self, X, y = None): 
+    def fit(self, X, y = None):
+        ray.shutdown() 
         ray.init(num_cpus=self.n_jobs)
         self.baseline = np.array(ray.get([rubberband_fitter.remote(i) 
         for i in np.apply_along_axis(lambda row: row, axis = 0, arr=X)]))

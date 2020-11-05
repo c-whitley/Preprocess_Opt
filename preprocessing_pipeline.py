@@ -15,7 +15,7 @@ from sklearn.ensemble import RandomForestClassifier as RF
 from sklearn import model_selection 
 from sklearn import metrics 
 
-from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils
+from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils, Scattering
 
 class Pipeline_Opt:
     """[summary]
@@ -31,6 +31,7 @@ class Pipeline_Opt:
             'smoothing': smoothing,
             'normalise': normalise,
             'baseline': baseline,
+            'Scattering': Scattering,
             'FeaExtraction': FeaExtraction,
             'Classifier': Classifier
         }
@@ -159,7 +160,7 @@ class BruteForceGenerator:
             paramList ([type]): [description]
         """
         self.paramList = paramList
-        self.order = kwargs.get('order',['binning','smoothing','normalise','baseline','FeaExtraction', 'Classifier'])
+        self.order = kwargs.get('order',['binning','smoothing','normalise','baseline', 'Scattering','FeaExtraction', 'Classifier'])
         self.gen = self.get_addresses()
         
 

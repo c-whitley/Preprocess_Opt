@@ -1,3 +1,4 @@
+from methods.baseline import sg_diff
 import numpy as np
 import pandas as pd 
 import ray
@@ -15,117 +16,113 @@ def MakeTransformer(method, **kwargs):
 
     transformers = {
                     'doNothing': IdentityTransformer(),
-                    'kohler': Kohler()
+                    'kohler': Kohler
                     }
 
     return transformers[method].set_params(**kwargs)
 
-
+    
 class Kohler( BaseEstimator, TransformerMixin):
     """
     Applies a Mie Scattering correction to the input matrix of spectra.
     Must be supplied as a shape (n_samples, n_wavenumbers)
     """
 
-    def __init__(self, n_jobs = 4, n_components = 8):
+    def __init__(self, n_jobs = None, n_components = 8):
 
         self.n_jobs = n_jobs
         self.n_components = n_components
-        #self.n_components = kwargs.get('n_components', 8)
    
 
     def transform(self, X, y=None):
 
         return pd.DataFrame(self.baseline, index = X.index, columns = X.columns)
 
-    @ray.remote
-    def Kohler_fit(self, wavenumbers, App, m0):
-        """
-        Correct scattered spectra using Kohler's algorithm
-        :param wavenumbers: array of wavenumbers
-        :param App: apparent spectrum
-        :param m0: reference spectrum
-        :param n_components: number of principal components to be calculated 
-        :return: corrected data
-        """
-        # Make copies of all input data:
-        wn = np.copy(wavenumbers)
-        A_app = np.copy(App)
-        m_0 = np.copy(m0)
-        ii = np.argsort(wn)  # Sort the wavenumbers from smallest to largest
-        # Sort all the input variables accordingly
-        wn = wn[ii]
-        A_app = A_app[ii]
-        m_0 = m_0[ii]
-
-        # Initialize the alpha parameter:
-        alpha = np.linspace(3.14, 49.95, 150) * 1.0e-4  # alpha = 2 * pi * d * (n - 1) * wavenumber
-        p0 = np.ones(2 + self.n_components)  # Initialize the initial guess for the fitting
-
-        # # Initialize the extinction matrix:
-        Q_ext = np.zeros((np.size(alpha), np.size(wn)))
-        for i in range(np.size(alpha)):
-            Q_ext[i][:] = Q_ext_kohler(wn, alpha=alpha[i])
-
-        # Perform PCA of Q_ext:
-        pca = skl_decomposition.IncrementalPCA(n_components=self.n_components)
-        pca.fit(Q_ext)
-        p_i = pca.components_  # Extract the principal components
-
-        # print(np.sum(pca.explained_variance_ratio_)*100)  # Print th explained variance ratio in percentage
-
-        def min_fun(x):
-            """
-            Function to be minimized by the fitting
-            :param x: array containing the reference linear factor, the offset, and the PCA scores 
-            :return: function to be minimized
-            """
-            bb, cc, g = x[0], x[1], x[2:]
-            # Return the squared norm of the difference between the apparent spectrum and the fit
-            return np.linalg.norm(A_app - apparent_spectrum_fit_function(wn, m_0, p_i, bb, cc, g)) ** 2.0
-
-        # Minimize the function using Powell method
-        res = scipy.optimize.minimize(min_fun, p0, bounds=None, method='Powell')
-        # print(res)  # Print the minimization result
-        # assert(res.success) # Raise AssertionError if res.success == False
-
-        b, c, g_i = res.x[0], res.x[1], res.x[2:]  # Obtain the fitted parameters
-
-        # Apply the correction to the apparent spectrum
-        Z_corr = np.zeros(np.shape(m_0))
-        for i in range(len(wavenumbers)):
-            sum1 = 0
-            for j in range(len(g_i)):
-                sum1 += g_i[j] * p_i[j][i]
-            Z_corr[i] = (A_app[i] - c - sum1) / b
-
-        return Z_corr[::-1]  # Return the correction in reverse order for compatibility
-
-
     def fit(self, X, y=None):
 
         # Use the columns of the dataframe as the wavenumbers
-        self.wavenumbers = X.columns
+        wavenumbers = X.columns
 
-        self.X=X
+        #self.X=X
 
-        
+        #print(self.X[0,:].shape)
+
         # Use the mean as reference spectrm
-        self.ref = self.X.mean(axis=0)
+        ref = X.mean(axis=0)
 
-        # Initialise ray with the number of cores specified
         ray.shutdown()
+        # Initialise ray with the number of cores specified
         ray.init(num_cpus=self.n_jobs)
 
         # Get the baseline matrix from the ray jobs
-        self.baseline = np.array(ray.get([self.Kohler_fit.remote(self, self.wavenumbers[::-1], spectrum, self.ref) 
-        for spectrum in np.apply_along_axis(lambda row: row, axis = 0, arr=self.X)]))
+        self.baseline = np.array(ray.get([Kohler_fit.remote(wavenumbers[::-1], spectrum, ref, self.n_components) 
+        for spectrum in np.apply_along_axis(lambda row: row, axis = 0, arr=X)]))
 
         return self
 
 
+@ray.remote
+def Kohler_fit(wavenumbers, App, m0, n_components):
+    """
+    Correct scattered spectra using Kohler's algorithm
+    :param wavenumbers: array of wavenumbers
+    :param App: apparent spectrum
+    :param m0: reference spectrum
+    :param n_components: number of principal components to be calculated 
+    :return: corrected data
+    """
+    # Make copies of all input data:
+    wn = np.copy(wavenumbers)
+    A_app = np.copy(App)
+    m_0 = np.copy(m0)
+    ii = np.argsort(wn)  # Sort the wavenumbers from smallest to largest
+    # Sort all the input variables accordingly
+    wn = wn[ii]
+    A_app = A_app[ii]
+    m_0 = m_0[ii]
 
-        
+    # Initialize the alpha parameter:
+    alpha = np.linspace(3.14, 49.95, 150) * 1.0e-4  # alpha = 2 * pi * d * (n - 1) * wavenumber
+    p0 = np.ones(2 + n_components)  # Initialize the initial guess for the fitting
+
+    # # Initialize the extinction matrix:
+    Q_ext = np.zeros((np.size(alpha), np.size(wn)))
+    for i in range(np.size(alpha)):
+        Q_ext[i][:] = Q_ext_kohler(wn, alpha=alpha[i])
+
+    # Perform PCA of Q_ext:
+    pca = skl_decomposition.IncrementalPCA(n_components=n_components)
+    pca.fit(Q_ext)
+    p_i = pca.components_  # Extract the principal components
+
+    # print(np.sum(pca.explained_variance_ratio_)*100)  # Print th explained variance ratio in percentage
+
+    def min_fun(x):
+        """
+        Function to be minimized by the fitting
+        :param x: array containing the reference linear factor, the offset, and the PCA scores 
+        :return: function to be minimized
+        """
+        bb, cc, g = x[0], x[1], x[2:]
+        # Return the squared norm of the difference between the apparent spectrum and the fit
+        return np.linalg.norm(A_app - apparent_spectrum_fit_function(wn, m_0, p_i, bb, cc, g)) ** 2.0
+
+    # Minimize the function using Powell method
+    res = scipy.optimize.minimize(min_fun, p0, bounds=None, method='Powell')
+    # print(res)  # Print the minimization result
+    # assert(res.success) # Raise AssertionError if res.success == False
+
+    b, c, g_i = res.x[0], res.x[1], res.x[2:]  # Obtain the fitted parameters
+
+    # Apply the correction to the apparent spectrum
+    Z_corr = np.zeros(np.shape(m_0))
+    for i in range(len(wavenumbers)):
+        sum1 = 0
+        for j in range(len(g_i)):
+            sum1 += g_i[j] * p_i[j][i]
+        Z_corr[i] = (A_app[i] - c - sum1) / b
+
+    return Z_corr[::-1]  # Return the correction in reverse order for compatibility
 
 def konevskikh_parameters(a, n0, f):
     """
