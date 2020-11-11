@@ -88,7 +88,6 @@ def find_value(value, wavenumbers):
     return pos, val
 
 def find_value_num(value, vector): 
-    #print(type(vector.values[0]), type(value))
     pos = np.argmin(abs(vector.values - value))
     
     return pos

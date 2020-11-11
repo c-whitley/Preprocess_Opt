@@ -16,8 +16,12 @@ def MakeTransformer(method, **kwargs):
             'min_max': min_max(),
             'feature': feature(),
             }
-
-    return transformers[method].set_params(**kwargs)
+    if kwargs: 
+        return transformers[method].set_params(**kwargs)
+    else:
+        print('no kwargs') 
+        return transformers[method]
+    #return transformers[method].set_params(**kwargs)
 
 class vector(TransformerMixin, BaseEstimator): 
 
@@ -49,9 +53,9 @@ class min_max(TransformerMixin, BaseEstimator):
 
 class feature(TransformerMixin, BaseEstimator):
 
-    def __init__(self, feature = 1650, **kwargs): 
+    def __init__(self, **kwargs): 
 
-        self.fea = feature
+        self.fea = kwargs.get('fea',1650)
 
     def fit(self, X, y = None):
 

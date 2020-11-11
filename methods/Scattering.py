@@ -17,8 +17,11 @@ def MakeTransformer(method, **kwargs):
                     'doNothing': IdentityTransformer(),
                     'kohler': Kohler()
                     }
-
-    return transformers[method].set_params(**kwargs)
+    if kwargs: 
+        return transformers[method].set_params(**kwargs)
+    else: 
+        return transformers[method]
+    #return transformers[method].set_params(**kwargs)
 
 
 class Kohler( BaseEstimator, TransformerMixin):

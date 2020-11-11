@@ -15,7 +15,11 @@ def MakeTransformer(method, **kwargs):
             'savgol':savgol(),
             'PCA':PCA_smooth()
             } 
-    return transformers[method].set_params(**kwargs)
+    if kwargs: 
+        return transformers[method].set_params(**kwargs)
+    else: 
+        return transformers[method]
+    #return transformers[method].set_params(**kwargs)
 '''
 def getTransformers(): 
     return {
@@ -44,9 +48,9 @@ class savgol(TransformerMixin, BaseEstimator):
 
 class PCA_smooth(TransformerMixin, BaseEstimator): 
 
-    def __init__(self, num_components = 0.9, **kwargs):
+    def __init__(self, n_components = 0.9, **kwargs):
 
-        self.num_components = num_components
+        self.num_components = n_components
 
     def fit(self, X, y = None):
 

@@ -11,7 +11,13 @@ def MakeTransformer(method, **kwargs):
             'MeanBin': SpectralBinning()
             }
     
-    return transformers[method].set_params(**kwargs)
+    if kwargs: 
+        return transformers[method].set_params(**kwargs)
+    else: 
+        return transformers[method]
+    #return transformers[method].set_params(**kwargs)
+    
+        #return transformers[method]
 
 class SpectralBinning(TransformerMixin, BaseEstimator):
 
