@@ -131,5 +131,5 @@ settings.json
 test.py
 
 data.hdf
-test_nb.ipynb
+#test_nb.ipynb
 data.pkl
