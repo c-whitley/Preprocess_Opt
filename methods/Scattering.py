@@ -9,6 +9,19 @@ import sklearn.decomposition as skl_decomposition
 from sklearn.decomposition import PCA
 from scipy.signal import hilbert
 from scipy.spatial import ConvexHull
+from .utils import IdentityTransformer
+
+def MakeTransformer(method, **kwargs): 
+
+    transformers = {
+                    'doNothing': IdentityTransformer(),
+                    'kohler': Kohler()
+                    }
+    if kwargs: 
+        return transformers[method].set_params(**kwargs)
+    else: 
+        return transformers[method]
+    #return transformers[method].set_params(**kwargs)
 
 
 class Kohler( BaseEstimator, TransformerMixin):
@@ -17,10 +30,11 @@ class Kohler( BaseEstimator, TransformerMixin):
     Must be supplied as a shape (n_samples, n_wavenumbers)
     """
 
-    def __init__(self, n_jobs = 1, **kwargs):
+    def __init__(self, n_jobs = 4, n_components = 8):
 
         self.n_jobs = n_jobs
-        self.n_components = kwargs.get('n_components', 8)
+        self.n_components = n_components
+        #self.n_components = kwargs.get('n_components', 8)
    
 
     def transform(self, X, y=None):
@@ -103,6 +117,7 @@ class Kohler( BaseEstimator, TransformerMixin):
         self.ref = self.X.mean(axis=0)
 
         # Initialise ray with the number of cores specified
+        ray.shutdown()
         ray.init(num_cpus=self.n_jobs)
 
         # Get the baseline matrix from the ray jobs

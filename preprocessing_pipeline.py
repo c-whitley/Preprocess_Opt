@@ -13,15 +13,17 @@ from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.ensemble import RandomForestClassifier as RF
 from sklearn import model_selection 
-from sklearn import metrics 
+from sklearn import metrics
+import skopt
 
-from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils
+from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils, Scattering
+
 
 class Pipeline_Opt:
     """[summary]
     """    
 
-    def __init__(self, address):
+    def __init__(self, address, n_levels = 1):
         """[summary]
         """        
         self.address = address
@@ -31,12 +33,13 @@ class Pipeline_Opt:
             'smoothing': smoothing,
             'normalise': normalise,
             'baseline': baseline,
+            'Scattering': Scattering,
             'FeaExtraction': FeaExtraction,
             'Classifier': Classifier
         }
 
         self.make_pipeline()
-
+        self.n_levels = n_levels
 
     def make_pipeline(self):
         """[summary]
@@ -141,10 +144,90 @@ class Pipeline_Opt:
             self.ind_gen = split_ob.split(self.X, self.X.index.get_level_values(y), self.X.index.get_level_values(group))
 
 #----------------------------------------------------------------------------------------------------------------------------------
+class BayesOptimiser():
+
+    def __init__(self, address):
+
+        
+        self.order = ['binning', 'smoothing', 'normalise','baseline','FeaExtraction', 'Classifier']
+        self.mods = {
+            'binning':binning, 
+            'smoothing': smoothing,
+            'normalise': normalise,
+            'baseline': baseline,
+            'FeaExtraction': FeaExtraction,
+            'Classifier': Classifier
+        }
+        self.address = collections.OrderedDict({key: address[key] for key in self.order})
+        self.MakePipelineBayes()
+        
+    def MakePipelineBayes(self):
+
+        pipeline_list = []
+
+        for k,v in self.address.items():
+            
+            transformer = []
+            transformer.append(k)
+            
+            transformer.append(self.mods[k].MakeTransformer(v[0]))
+            
+            pipeline_list.append(transformer)
+            
+            self.pipeline = Pipeline(pipeline_list)
+            self.BayesParameters()
+
+    def BayesParameters(self):
+
+        self.params = {}
+        for step, v in self.address.items():
+            
+            for param, space in v[1].items():
+
+                self.params["{}__{}".format(step, param)] = space
+                
+
+
+    def BayesSearch(self, X, y, **kwargs):
+        
+        n_iter = kwargs.get('n_iter', 10)
+        n_points = kwargs.get('n_points', 1)
+        random_state = kwargs.get('random_state', None)
+        random_state_split = kwargs.get('random_state_split', None)
+        split_ob = kwargs.get('split_ob', 5)
+        n_jobs = kwargs.get('n_jobs', -1)
+        print(self.pipeline)
+        print(self.params)
+
+        if not isinstance(split_ob, int):
+            self.ind_gen = utils.Split(X, y, split_ob = split_ob, group = 'patient', random_state = random_state_split)
+        else: 
+            self.ind_gen = split_ob
+        
+        if self.params:
+            opt_func = skopt.BayesSearchCV(self.pipeline, self.params, n_iter = n_iter, n_points = n_points, random_state=random_state, cv = self.ind_gen, verbose = 1, n_jobs = n_jobs)
+            opt_func.fit(X, y)
+            self.score = opt_func.best_score_
+            print(self.score)
+        else: 
+            print('No parameter space to search. Performing standard cross validation instead')
+            self.score = model_selection.cross_val_score(self.pipeline, X, y,  scoring = 'roc_auc', cv = self.ind_gen)
+            print(self.score)
+        #print(self.opt_func.best_params_)
+        
+     
+
+
+
+
+        
+
+
+
 
 class BruteForceGenerator:
     """
-    Class for the bruce force generation of pipelines.
+    Class for the brute force generation of pipelines.
 
     Yields:
         [type]: [description]
@@ -159,7 +242,7 @@ class BruteForceGenerator:
             paramList ([type]): [description]
         """
         self.paramList = paramList
-        self.order = kwargs.get('order',['binning','smoothing','normalise','baseline','FeaExtraction', 'Classifier'])
+        self.order = kwargs.get('order',['binning','smoothing','normalise','baseline', 'Scattering','FeaExtraction', 'Classifier'])
         self.gen = self.get_addresses()
         
 

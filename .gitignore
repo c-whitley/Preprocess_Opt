@@ -131,4 +131,5 @@ settings.json
 test.py
 
 data.hdf
-test_nb_Conor.ipynb
+#test_nb.ipynb
+data.pkl

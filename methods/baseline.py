@@ -17,8 +17,14 @@ def MakeTransformer(method, **kwargs):
                     'rubberband': Rubber_Band()
                     }
 
+    if kwargs: 
+        return transformers[method].set_params(**kwargs)
+    else:
+        
+        return transformers[method]
 
-    return transformers[method].set_params(**kwargs)
+
+#    return transformers[method].set_params(**kwargs)
     
 
 #Savitzy Golay differentiation 
@@ -29,32 +35,42 @@ class sg_diff(TransformerMixin, BaseEstimator):
         self.window = window
         self.polyorder = polyorder
         self.order = order
-
+        
     def fit(self, X, y = None):
 
         return self
 
     def transform(self, X, y = None):
-
+        #print("Performing SG differentiation")
         return pd.DataFrame(savgol_filter(X.values, self.window, self.polyorder, self.order), index=X.index, columns = X.columns)
 
 class Rubber_Band(TransformerMixin, BaseEstimator):
 
-    def __init__(self, num_jobs = 4): 
+    def __init__(self, **kwargs): 
 
-        self.num_jobs = num_jobs
-
-    def fit(self, X, y = None): 
+        self.n_jobs = kwargs.get('n_jobs', 4)
+        
+    '''
+    def fit(self, X, y = None):
+        ray.shutdown() 
         ray.init(num_cpus=self.n_jobs)
         self.baseline = np.array(ray.get([rubberband_fitter.remote(i) 
         for i in np.apply_along_axis(lambda row: row, axis = 0, arr=X)]))
         return self
 
     def transform(self, X, y = None): 
-
+        print(X.shape, self.baseline.shape)
         return X - self.baseline
+    '''
+    def fit(self, X, y = None): 
+        return self
 
-
+    def transform(self, X, y = None):
+        #print("Performing rubberband correction")
+        ray.shutdown()
+        ray.init(num_cpus=self.n_jobs)
+        baseline = np.array(ray.get([rubberband_fitter.remote(i) for i in np.apply_along_axis(lambda row: row, axis = 0, arr=X)]))
+        return X - baseline
 
     
 

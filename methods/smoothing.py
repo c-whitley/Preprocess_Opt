@@ -15,7 +15,11 @@ def MakeTransformer(method, **kwargs):
             'savgol':savgol(),
             'PCA':PCA_smooth()
             } 
-    return transformers[method].set_params(**kwargs)
+    if kwargs: 
+        return transformers[method].set_params(**kwargs)
+    else: 
+        return transformers[method]
+    #return transformers[method].set_params(**kwargs)
 '''
 def getTransformers(): 
     return {
@@ -38,22 +42,22 @@ class savgol(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, y = None):
-
+        #print("Performing SG smoothing")
         return pd.DataFrame(savgol_filter(X.values, self.window, self.polyorder), index = X.index, columns = X.columns)
 
 
 class PCA_smooth(TransformerMixin, BaseEstimator): 
 
-    def __init__(self, num_components = 0.9, **kwargs):
+    def __init__(self, n_components = 0.9, **kwargs):
 
-        self.num_components = num_components
+        self.num_components = n_components
 
     def fit(self, X, y = None):
 
         return self
 
     def transform(self, X, y = None): 
-
+        #print("Performing PCA smoothing")
         pca = PCA(n_components = self.num_components)
 
         X_pca = pca.fit_transform(X)

@@ -13,8 +13,11 @@ def MakeTransformer(method, **kwargs):
         'PCA': PCA(),
         'LDA': LinearDiscriminantAnalysis()
     }
-    
-    return transformers[method].set_params(**kwargs)
+    if kwargs: 
+        return transformers[method].set_params(**kwargs)
+    else: 
+        return transformers[method]
+    #return transformers[method].set_params(**kwargs)
     #return FunctionTransformer(transformers[method], kw_args=kwargs)
 
 '''
