@@ -19,7 +19,7 @@ def MakeTransformer(method, **kwargs):
     if kwargs: 
         return transformers[method].set_params(**kwargs)
     else:
-        print('no kwargs') 
+        
         return transformers[method]
     #return transformers[method].set_params(**kwargs)
 
@@ -34,7 +34,7 @@ class vector(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, y = None): 
-
+        #print("Performing vector normalisation")
         return pd.DataFrame(normalize(X), index = X.index, columns = X.columns)
 
 class min_max(TransformerMixin, BaseEstimator):
@@ -48,7 +48,7 @@ class min_max(TransformerMixin, BaseEstimator):
         return self
     
     def transform(self, X, y = None): 
-
+        #print("Performing min-max normalisation")
         return pd.DataFrame(minmax_scale(X, axis = 1), index = X.index, columns = X.columns)
 
 class feature(TransformerMixin, BaseEstimator):
@@ -62,7 +62,7 @@ class feature(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, y = None):
-
+        #print("Peforming feature normalisation")
         return X.div(X.iloc[:,find_value_num(self.fea, X.columns)], axis = 0)
 
 

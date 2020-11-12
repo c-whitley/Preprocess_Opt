@@ -22,7 +22,7 @@ def MakeTransformer(method, **kwargs):
 class SpectralBinning(TransformerMixin, BaseEstimator):
 
     def __init__(self, factor = 2, **kwargs):
-
+        
         self.factor = factor
 
     def fit(self, X, y = None): 
@@ -30,7 +30,7 @@ class SpectralBinning(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, y = None):
-        
+        #print("Performing Spectral Binning")
         return MeanBin(X, self.factor)
 
 

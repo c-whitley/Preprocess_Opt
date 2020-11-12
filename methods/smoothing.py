@@ -42,7 +42,7 @@ class savgol(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, y = None):
-
+        #print("Performing SG smoothing")
         return pd.DataFrame(savgol_filter(X.values, self.window, self.polyorder), index = X.index, columns = X.columns)
 
 
@@ -57,7 +57,7 @@ class PCA_smooth(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, y = None): 
-
+        #print("Performing PCA smoothing")
         pca = PCA(n_components = self.num_components)
 
         X_pca = pca.fit_transform(X)

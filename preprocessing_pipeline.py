@@ -190,21 +190,32 @@ class BayesOptimiser():
 
     def BayesSearch(self, X, y, **kwargs):
         
-        n_iter = kwargs.get('n_jobs', 10)
+        n_iter = kwargs.get('n_iter', 10)
+        n_points = kwargs.get('n_points', 1)
+        random_state = kwargs.get('random_state', None)
+        random_state_split = kwargs.get('random_state_split', None)
+        split_ob = kwargs.get('split_ob', 5)
+        n_jobs = kwargs.get('n_jobs', -1)
         print(self.pipeline)
         print(self.params)
+
+        if not isinstance(split_ob, int):
+            self.ind_gen = utils.Split(X, y, split_ob = split_ob, group = 'patient', random_state = random_state_split)
+        else: 
+            self.ind_gen = split_ob
+        
         if self.params:
-            opt_func = skopt.BayesSearchCV(self.pipeline, self.params, n_iter = n_iter)
+            opt_func = skopt.BayesSearchCV(self.pipeline, self.params, n_iter = n_iter, n_points = n_points, random_state=random_state, cv = self.ind_gen, verbose = 1, n_jobs = n_jobs)
             opt_func.fit(X, y)
             self.score = opt_func.best_score_
             print(self.score)
         else: 
             print('No parameter space to search. Performing standard cross validation instead')
-            self.score = model_selection.cross_val_score(self.pipeline, X, y, cv = 3, scoring = 'roc_auc')
+            self.score = model_selection.cross_val_score(self.pipeline, X, y,  scoring = 'roc_auc', cv = self.ind_gen)
             print(self.score)
         #print(self.opt_func.best_params_)
         
-
+     
 
 
 

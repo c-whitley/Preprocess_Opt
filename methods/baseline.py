@@ -20,7 +20,7 @@ def MakeTransformer(method, **kwargs):
     if kwargs: 
         return transformers[method].set_params(**kwargs)
     else:
-        print('no kwargs')
+        
         return transformers[method]
 
 
@@ -35,13 +35,13 @@ class sg_diff(TransformerMixin, BaseEstimator):
         self.window = window
         self.polyorder = polyorder
         self.order = order
-
+        
     def fit(self, X, y = None):
 
         return self
 
     def transform(self, X, y = None):
-
+        #print("Performing SG differentiation")
         return pd.DataFrame(savgol_filter(X.values, self.window, self.polyorder, self.order), index=X.index, columns = X.columns)
 
 class Rubber_Band(TransformerMixin, BaseEstimator):
@@ -49,6 +49,7 @@ class Rubber_Band(TransformerMixin, BaseEstimator):
     def __init__(self, **kwargs): 
 
         self.n_jobs = kwargs.get('n_jobs', 4)
+        
     '''
     def fit(self, X, y = None):
         ray.shutdown() 
@@ -65,7 +66,7 @@ class Rubber_Band(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, y = None):
-
+        #print("Performing rubberband correction")
         ray.shutdown()
         ray.init(num_cpus=self.n_jobs)
         baseline = np.array(ray.get([rubberband_fitter.remote(i) for i in np.apply_along_axis(lambda row: row, axis = 0, arr=X)]))

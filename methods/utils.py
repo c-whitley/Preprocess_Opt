@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn import model_selection
 from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,
                                      StratifiedKFold, GroupShuffleSplit,
                                      GroupKFold, StratifiedShuffleSplit)
@@ -135,5 +136,25 @@ def plot_cv_indices(X, y, group, ax, n_splits, random_state = 12, lw=10):
     return ax
         
 
+def Split(X, y, split_ob = model_selection.KFold, group = 'patient', random_state = None, **kwargs): 
+        """        
+        Method which splits the data into training and testing.
+        KFoldGroup is custom written splitter that splits into partitions with unique groups i.e. no same patient in two partitions.
 
+        Args:
+            split_ob ([type]): [description]
+            y (str, optional): [description]. Defaults to 'Class'.
+            group (str, optional): [description]. Defaults to 'patient'.
+        """
+        
+        if split_ob == 'KFoldGroup':
+
+            y=strings2int(y.values)
+            group = strings2int(X.index.get_level_values(group).values)
+            ind_gen = stratified_group_k_fold(X.values, y[0], group[0], random_state = random_state,**kwargs)
+
+        else: 
+            ind_gen = split_ob.split(X, y, X.index.get_level_values(group))
+
+        return ind_gen
 
