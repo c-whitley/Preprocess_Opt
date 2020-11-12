@@ -26,18 +26,15 @@ class Condor_Job_Pipeline:
             print("directory created at {}".format(self.jobdir))
         else: 
             print("caution: directory already exists")
-    
+        print(os.getcwd())
     def prepare(self, X, n = None):
 
-         pipe = pp.Pipeline_Opt()
 
          for i, address in enumerate(self.iterable):
 
-             pipe.make_pipeline(address)
-
              with open(os.path.join(self.jobdir, "pipe{}".format(i)), "wb") as f:
 
-                 dill.dump(pipe, f, protocol=4)
+                 pickle.dump(address, f, protocol=4)
              if n is not(None):
                 if i == n: 
                     break
@@ -50,10 +47,23 @@ class Condor_Job_Pipeline:
          os.system("sh dependency_zipper.sh {}/".format(self.jobdir))
          os.system("cp ./{} {}/".format(self.function, os.path.join(self.jobdir)))
          self.submission_file()
-
+    
+    def submit(self):
+        os.chdir(self.jobdir)
+        print("working in directory ", os.getcwd())
+        os.system("ln -s dependencies.exe dependencies.zip")  
+        os.system("python_submit condor_scorer -N")
+        f = open("condor_scorer.bat","r")
+        lines = f.readlines()
+        lines[33] = "dependencies.zip\n"
+        f = open("condor_scorer.bat", "w")
+        f.writelines(lines)
+        f.close()
+        os.system("condor_submit condor_scorer.sub")          
+        #print(stdout)
     def submission_file(self):
 
-        with open(os.path.join(self.jobdir, "submission_file"), "w") as file:
+        with open(os.path.join(self.jobdir, "condor_scorer"), "w") as file:
 
             file.write(f"python_script = {self.function}\n")
             file.write(f"python_version = python_3.7.4\n")
