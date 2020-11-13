@@ -205,9 +205,9 @@ class BayesOptimiser():
             self.ind_gen = split_ob
         
         if self.params:
-            opt_func = skopt.BayesSearchCV(self.pipeline, self.params, n_iter = n_iter, n_points = n_points, random_state=random_state, cv = self.ind_gen, verbose = 1, n_jobs = n_jobs)
-            opt_func.fit(X, y)
-            self.score = opt_func.best_score_
+            self.opt_func = skopt.BayesSearchCV(self.pipeline, self.params, n_iter = n_iter, n_points = n_points, random_state=random_state, cv = self.ind_gen, verbose = 1, n_jobs = n_jobs)
+            self.opt_func.fit(X, y)
+            self.score = self.opt_func.best_score_
             print(self.score)
         else: 
             print('No parameter space to search. Performing standard cross validation instead')

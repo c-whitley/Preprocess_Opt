@@ -1,6 +1,6 @@
 import sys
 sys.path.append("/condor_data/sgbellis/modules")
-from Preprocess_Opt import preprocessing_pipeline as pp 
+#from Preprocess_Opt import preprocessing_pipeline as pp 
 import pandas as pd 
 import pickle
 import os
@@ -30,23 +30,23 @@ class Condor_Job_Pipeline:
     def prepare(self, X, n = None):
 
 
-         for i, address in enumerate(self.iterable):
+        for i, address in enumerate(self.iterable):
 
-             with open(os.path.join(self.jobdir, "pipe{}".format(i)), "wb") as f:
+            with open(os.path.join(self.jobdir, "pipe{}".format(i)), "wb") as f:
 
-                 pickle.dump(address, f, protocol=4)
-             if n is not(None):
+                pickle.dump(address, f, protocol=4)
+            if n is not(None):
                 if i == n: 
                     break
-         
-         self.n_jobs = i + 1
-         ind = X.index.names
-         pickle.dump(ind, open(os.path.join(self.jobdir, "ind"), "wb"), protocol = 4)
-         X.reset_index().to_json(os.path.join(self.jobdir, "data.json"), orient = "split")
-
-         os.system("sh dependency_zipper.sh {}/".format(self.jobdir))
-         os.system("cp ./{} {}/".format(self.function, os.path.join(self.jobdir)))
-         self.submission_file()
+        
+        self.n_jobs = i + 1
+        #ind = X.index.names
+        #pickle.dump(ind, open(os.path.join(self.jobdir, "ind"), "wb"), protocol = 4)
+        #X.reset_index().to_json(os.path.join(self.jobdir, "data.json"), orient = "split")
+        X.to_hdf(os.path.join(self.jobdir, "data.h5"), mode = "w", key = "df")
+        os.system("sh dependency_zipper.sh {}/".format(self.jobdir))
+        os.system("cp ./{} {}/".format(self.function, os.path.join(self.jobdir)))
+        self.submission_file()
     
     def submit(self):
         os.chdir(self.jobdir)
@@ -59,7 +59,7 @@ class Condor_Job_Pipeline:
         f = open("condor_scorer.bat", "w")
         f.writelines(lines)
         f.close()
-        os.system("condor_submit condor_scorer.sub")          
+        #os.system("condor_submit condor_scorer.sub")          
         #print(stdout)
     def submission_file(self):
 
