@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn import model_selection
+from sklearn import model_selection, preprocessing
 from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,
                                      StratifiedKFold, GroupShuffleSplit,
                                      GroupKFold, StratifiedShuffleSplit)
@@ -102,11 +102,11 @@ def strings2int(x):
     
     return x_idx.astype(np.int64), uni
 
-def plot_cv_indices(X, y, group, ax, n_splits, random_state = 12, lw=10):
+def plot_cv_indices(X, y, group, ax, cv, lw=10):
     """Create a sample plot for indices of a cross-validation object."""
 
     # Generate the training/testing visualizations for each CV split
-    for ii, (tr, tt) in enumerate(stratified_group_k_fold(X, y, group, n_splits, seed)):
+    for ii, (tr, tt) in enumerate(cv):
         # Fill in indices with the training/test groups
         indices = np.array([np.nan] * len(X))
         indices[tt] = 1
@@ -116,7 +116,7 @@ def plot_cv_indices(X, y, group, ax, n_splits, random_state = 12, lw=10):
         ax.scatter(range(len(indices)), [ii + .5] * len(indices),
                    c=indices, marker='_', lw=lw, cmap=cmap_cv,
                    vmin=-.2, vmax=1.2)
-
+    n_splits = ii + 1
     # Plot the data classes and groups at the end
     ax.scatter(range(len(X)), [ii + 1.5] * len(X),
                c=y, marker='_', lw=lw, cmap=cmap_data)
@@ -158,3 +158,14 @@ def Split(X, y, split_ob = model_selection.KFold, group = 'patient', random_stat
 
         return ind_gen
 
+def visualize_groups(classes, groups, name):
+    # Visualize dataset groups
+
+    groups = strings2int(groups)
+    fig, ax = plt.subplots()
+    ax.scatter(range(len(groups)),  [.5] * len(groups), c=groups, marker='_',
+               lw=50, cmap=cmap_data)
+    ax.scatter(range(len(groups)),  [3.5] * len(groups), c=classes, marker='_',
+               lw=50, cmap=cmap_data)
+    ax.set(ylim=[-1, 5], yticks=[.5, 3.5],
+           yticklabels=['Data\ngroup', 'Data\nclass'], xlabel="Sample index")
