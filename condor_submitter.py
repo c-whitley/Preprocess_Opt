@@ -16,10 +16,11 @@ class Condor_Job_Pipeline:
         self.name = name
         self.iterable = iterable
         self.function = function
+        self.user = input("Username: ")
         #self.main = main
         #self.dependencies = dependencies
 
-        self.jobdir = os.path.join("/condor_data", "sgbellis", "jobs", name)
+        self.jobdir = os.path.join("/condor_data", self.user, "jobs", name)
 
         if not(os.path.exists(self.jobdir)):
             os.mkdir(self.jobdir)
@@ -27,6 +28,7 @@ class Condor_Job_Pipeline:
         else: 
             print("caution: directory already exists")
         print(os.getcwd())
+
     def prepare(self, X, n = None):
 
 
