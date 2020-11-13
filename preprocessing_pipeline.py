@@ -200,7 +200,7 @@ class BayesOptimiser():
         print(self.params)
 
         if not isinstance(split_ob, int):
-            self.ind_gen = utils.Split(X, y, split_ob = split_ob, group = 'patient', random_state = random_state_split)
+            self.ind_gen = list(utils.Split(X, y, split_ob = split_ob, group = 'patient', random_state = random_state_split))
         else: 
             self.ind_gen = split_ob
         
