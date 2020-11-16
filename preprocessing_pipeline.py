@@ -196,6 +196,7 @@ class BayesOptimiser():
         random_state_split = kwargs.get('random_state_split', None)
         split_ob = kwargs.get('split_ob', 5)
         n_jobs = kwargs.get('n_jobs', -1)
+        
         print(self.pipeline)
         print(self.params)
 

@@ -48,19 +48,24 @@ class Condor_Job_Pipeline:
         X.to_hdf(os.path.join(self.jobdir, "data.h5"), mode = "w", key = "df")
         os.system("sh dependency_zipper.sh {}/".format(self.jobdir))
         os.system("cp ./{} {}/".format(self.function, os.path.join(self.jobdir)))
+
         self.submission_file()
     
     def submit(self):
+        
         os.chdir(self.jobdir)
         print("working in directory ", os.getcwd())
         os.system("ln -s dependencies.exe dependencies.zip")  
         os.system("python_submit condor_scorer -N")
+
+
         f = open("condor_scorer.bat","r")
         lines = f.readlines()
         lines[33] = "dependencies.zip\n"
-        f = open("condor_scorer.bat", "w")
-        f.writelines(lines)
-        f.close()
+
+        with open("condor_scorer.bat", "w") as f:
+            f.writelines(lines)
+
         #os.system("condor_submit condor_scorer.sub")          
         #print(stdout)
     def submission_file(self):
@@ -69,7 +74,7 @@ class Condor_Job_Pipeline:
 
             file.write(f"python_script = {self.function}\n")
             file.write(f"python_version = python_3.7.4\n")
-            file.write('input_files = data.json, ind, dependencies.zip \n')
+            file.write('input_files = data.h5, dependencies.zip \n')
             file.write("indexed_input_files = pipe\n")
             file.write("indexed_output_files = output\n")
             file.write("indexed_stdout = stdout.txt\n")
