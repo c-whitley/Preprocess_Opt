@@ -16,7 +16,8 @@ from sklearn import model_selection
 from sklearn import metrics
 import skopt
 
-from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils, Scattering
+from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils
+#, Scattering
 
 
 class Pipeline_Opt:

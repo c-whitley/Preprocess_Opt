@@ -39,7 +39,9 @@ class Kohler( BaseEstimator, TransformerMixin):
 
     def transform(self, X, y=None):
 
-        return pd.DataFrame(self.baseline, index = X.index, columns = X.columns)
+        if isinstance(X,pd.DataFrame):
+            return pd.DataFrame(self.baseline, index = X.index, columns = X.columns)
+        elif isinstance(X, )
 
     @ray.remote
     def Kohler_fit(self, wavenumbers, App, m0):
