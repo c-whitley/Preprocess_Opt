@@ -172,7 +172,7 @@ def visualize_groups(classes, groups, name):
 
 class StratifiedGroupKFold:
 
-    def __init__(self, random_state=1, k=3):
+    def __init__(self, k, random_state=1):
 
         self.random_state = random_state
         self.k = k
