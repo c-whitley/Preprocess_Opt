@@ -47,8 +47,8 @@ class sg_diff(TransformerMixin, BaseEstimator):
 class Rubber_Band(TransformerMixin, BaseEstimator):
 
     def __init__(self, **kwargs): 
-
-        self.n_jobs = kwargs.get('n_jobs', 4)
+        pass
+        #self.n_jobs = kwargs.get('n_jobs', 4)
         
     '''
     def fit(self, X, y = None):
@@ -67,9 +67,9 @@ class Rubber_Band(TransformerMixin, BaseEstimator):
 
     def transform(self, X, y = None):
         #print("Performing rubberband correction")
-        ray.shutdown()
-        ray.init(num_cpus=self.n_jobs)
-        baseline = np.array(ray.get([rubberband_fitter.remote(i) for i in np.apply_along_axis(lambda row: row, axis = 0, arr=X)]))
+        #ray.shutdown()
+        #ray.init(num_cpus=self.n_jobs)
+        baseline = np.array([rubberband_fitter(i) for i in np.apply_along_axis(lambda row: row, axis = 0, arr=X)])
         return X - baseline
 
     
@@ -99,7 +99,7 @@ class BaselineCorrection(TransformerMixin, BaseEstimator):
             
             return sg_diff(X, self.kw_args)
 '''
-@ray.remote
+#@ray.remote
 def rubberband_fitter(spectrum):
 
     wn = np.arange(len(spectrum))

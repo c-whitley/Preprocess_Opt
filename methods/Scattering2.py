@@ -1,7 +1,7 @@
 from methods.baseline import sg_diff
 import numpy as np
 import pandas as pd 
-import ray
+#import ray
 
 from sklearn.base import BaseEstimator, TransformerMixin
 
@@ -50,18 +50,18 @@ class Kohler( BaseEstimator, TransformerMixin):
         # Use the mean as reference spectrm
         ref = X.mean(axis=0)
 
-        ray.shutdown()
+        #ray.shutdown()
         # Initialise ray with the number of cores specified
-        ray.init(num_cpus=self.n_jobs)
+        #ray.init(num_cpus=self.n_jobs)
 
         # Get the baseline matrix from the ray jobs
-        self.baseline = np.array(ray.get([Kohler_fit.remote(wavenumbers[::-1], spectrum, ref, self.n_components) 
+        self.baseline = np.array([Kohler_fit(wavenumbers[::-1], spectrum, ref, self.n_components) 
         for spectrum in np.apply_along_axis(lambda row: row, axis = 0, arr=X)]))
 
         return self
 
 
-@ray.remote
+#@ray.remote
 def Kohler_fit(wavenumbers, App, m0, n_components):
     """
     Correct scattered spectra using Kohler's algorithm
