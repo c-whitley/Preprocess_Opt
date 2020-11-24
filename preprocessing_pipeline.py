@@ -16,7 +16,7 @@ from sklearn import model_selection
 from sklearn import metrics
 import skopt
 
-from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils, Scattering
+from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils, FeaSelect
 
 
 class Pipeline_Opt:
@@ -33,7 +33,7 @@ class Pipeline_Opt:
             'smoothing': smoothing,
             'normalise': normalise,
             'baseline': baseline,
-            'Scattering': Scattering,
+            'FeaSelect': FeaSelect,
             'FeaExtraction': FeaExtraction,
             'Classifier': Classifier
         }
@@ -150,15 +150,17 @@ class BayesOptimiser():
     def __init__(self, address):
 
         
-        self.order = ['binning', 'smoothing', 'normalise','baseline','FeaExtraction', 'Classifier']
+        self.order = ['binning', 'smoothing', 'normalise','baseline','FeaSelect','FeaExtraction', 'Classifier']
         self.mods = {
             'binning':binning, 
             'smoothing': smoothing,
             'normalise': normalise,
             'baseline': baseline,
+            "FeaSelect": FeaSelect, 
             'FeaExtraction': FeaExtraction,
             'Classifier': Classifier
         }
+
         self.address = collections.OrderedDict({key: address[key] for key in self.order})
         self.MakePipelineBayes()
         
