@@ -28,10 +28,12 @@ class Truncate( BaseEstimator , TransformerMixin ):
 
     def transform(self, X, y=None, **kwargs):
         
-        for region in self.remove: 
+        if self.remove:
 
-            pos, val = find_value(region, X.columns.values)
-            X.drop(X.columns[int(pos[0]):int(pos[1])], axis = 1, inplace = True)
+            for region in self.remove: 
+
+                pos, val = find_value(region, X.columns.values)
+                X.drop(X.columns[int(pos[0]):int(pos[1])], axis = 1, inplace = True)
 
         if self.ends == "fingerprint":
                    

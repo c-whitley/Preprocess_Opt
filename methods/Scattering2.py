@@ -57,21 +57,12 @@ class Kohler( BaseEstimator, TransformerMixin):
         #ray.init(num_cpus=self.n_jobs)
 
         # Get the baseline matrix from the ray jobs
-<<<<<<< HEAD
-        self.baseline = np.array([Kohler_fit(wavenumbers[::-1], spectrum, ref, self.n_components) 
-        for spectrum in np.apply_along_axis(lambda row: row, axis = 0, arr=X)]))
-=======
         self.baseline = np.array([Kohler_fit(wavenumbers[::-1], spectrum, self.reference, self.n_components) 
         for spectrum in np.apply_along_axis(lambda row: row, axis = 0, arr=X)])
->>>>>>> 06043f4c3a8b3df7182f6cf6acd8af5457f32a92
 
         return self
 
 
-<<<<<<< HEAD
-#@ray.remote
-=======
->>>>>>> 06043f4c3a8b3df7182f6cf6acd8af5457f32a92
 def Kohler_fit(wavenumbers, App, m0, n_components):
     """
     Correct scattered spectra using Kohler's algorithm

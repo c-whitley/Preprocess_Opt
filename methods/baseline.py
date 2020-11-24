@@ -67,16 +67,11 @@ class Rubber_Band(TransformerMixin, BaseEstimator):
 
     def transform(self, X, y = None):
         #print("Performing rubberband correction")
-<<<<<<< HEAD
-        #ray.shutdown()
-        #ray.init(num_cpus=self.n_jobs)
-=======
         '''
         ray.shutdown()
         ray.init(num_cpus=self.n_jobs)
         baseline = np.array(ray.get([rubberband_fitter.remote(i) for i in np.apply_along_axis(lambda row: row, axis = 0, arr=X)]))
         '''
->>>>>>> 06043f4c3a8b3df7182f6cf6acd8af5457f32a92
         baseline = np.array([rubberband_fitter(i) for i in np.apply_along_axis(lambda row: row, axis = 0, arr=X)])
         return X - baseline
 
