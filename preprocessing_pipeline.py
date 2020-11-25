@@ -53,6 +53,7 @@ class Pipeline_Opt:
         transformer = []
         
         for k, v in self.address.items():
+            
             transformer = []
             transformer.append(k)
             
