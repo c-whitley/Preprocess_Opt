@@ -61,13 +61,13 @@ class Condor_Job_Pipeline:
         #X.reset_index().to_json(os.path.join(self.jobdir, "data.json"), orient = "split")
         
         # Make temporary directory
-        #os.mkdir("Temp")
+        os.mkdir("Temp")
 
         # Make the submission file
         self.submission_file()
 
         for dependency in self.dependencies:
-            #os.system(f'cp -R {dependency} {self.jobdir}/Temp')              
+            os.system(f'cp -R {dependency} {self.jobdir}/Temp')              
             print(f'Copied {dependency} to {self.jobdir}/Temp')
 
         # Copy data
@@ -77,27 +77,28 @@ class Condor_Job_Pipeline:
         os.system(f"cp ./{self.function} {self.jobdir}/")
 
         # Turn temp directory into SFX
-        #os.system(f'7z a -sfx7zWindows.sfx {self.jobdir}/dependencies.exe {self.jobdir}/Temp/')
+        os.system(f'7z a -sfx7zWindows.sfx {self.jobdir}/dependencies.exe {self.jobdir}/Temp/')
         # Link exe file with zip
         os.system(f"ln -s {self.jobdir}/dependencies.exe {self.jobdir}/dependencies.zip")
         # Remove temp directory
         shutil.rmtree("Temp")
 
+    
+    def submit(self):
+
         os.chdir(self.jobdir)
         os.system("python_submit condor_scorer -N")
 
-        f = open("condor_scorer.bat","r")
-        lines = f.readlines()
-        lines[33] = "dependencies.zip\n"
+        # Edit .bat file to run self-extracting directory
+        with open("condor_scorer.bat","r+") as f:
 
-        with open("condor_scorer.bat", "w") as f:
+            lines = f.readlines()
+            lines[33] = "dependencies.zip\n"
             f.writelines(lines)
-    
-    def submit(self):
         
         #os.system("condor_submit condor_scorer.sub")
-        os.popen("condor_submit condor_scorer.sub").read()        
-        #print(stdout)
+        stdout=os.popen("condor_submit condor_scorer.sub").read()        
+        print(stdout)
 
     def submission_file(self):
 
