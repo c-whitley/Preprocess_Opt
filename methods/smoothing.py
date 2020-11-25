@@ -50,7 +50,7 @@ class PCA_smooth(TransformerMixin, BaseEstimator):
 
     def __init__(self, n_components = 0.9, **kwargs):
 
-        self.num_components = n_components
+        self.n_components = n_components
 
     def fit(self, X, y = None):
 
@@ -58,7 +58,7 @@ class PCA_smooth(TransformerMixin, BaseEstimator):
 
     def transform(self, X, y = None): 
         #print("Performing PCA smoothing")
-        pca = PCA(n_components = self.num_components)
+        pca = PCA(n_components = self.n_components)
 
         X_pca = pca.fit_transform(X)
 
