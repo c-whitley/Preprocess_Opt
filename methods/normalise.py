@@ -6,7 +6,6 @@ from sklearn.preprocessing import normalize, minmax_scale, FunctionTransformer
 from .utils import find_value_num, IdentityTransformer
 from sklearn.base import TransformerMixin, BaseEstimator
 #methods will return a sklearn FunctionTransformer object which can be incorporated into a pipeline
-
 #X is a pandas dataframe, can have multi-indexing and wavenumber titled columns 
 def MakeTransformer(method, **kwargs):
 

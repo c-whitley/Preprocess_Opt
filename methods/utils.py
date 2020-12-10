@@ -8,13 +8,13 @@ from sklearn import model_selection, preprocessing
 from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,
                                      StratifiedKFold, GroupShuffleSplit,
                                      GroupKFold, StratifiedShuffleSplit)
+from sklearn.preprocessing import LabelEncoder
 np.random.seed(1338)
 cmap_data = plt.cm.Paired
 cmap_cv = plt.cm.coolwarm
 n_splits = 4
 from collections import Counter, defaultdict
 from itertools import compress,chain
-
 
 class IdentityTransformer(TransformerMixin, BaseEstimator):
     
@@ -148,15 +148,16 @@ def Split(X, y, split_ob = model_selection.KFold, group = 'patient', random_stat
             y (str, optional): [description]. Defaults to 'Class'.
             group (str, optional): [description]. Defaults to 'patient'.
         """
-        
+        '''
         if split_ob == 'KFoldGroup':
 
             y=strings2int(y.values)
             group = strings2int(X.index.get_level_values(group).values)
             ind_gen = stratified_group_k_fold(X.values, y[0], group[0], random_state = random_state,**kwargs)
 
-        else: 
-            ind_gen = split_ob.split(X, y, X.index.get_level_values(group))
+        else:
+        '''     
+        ind_gen = split_ob.split(X, y, X.index.get_level_values(group))
 
         return ind_gen
 
@@ -174,13 +175,17 @@ def visualize_groups(classes, groups, name):
 
 class StratifiedGroupKFold:
 
-    def __init__(self, k, random_state=1):
+    def __init__(self, k, random_state=1, balance = False):
 
         self.random_state = random_state
         self.k = k
+        self.balance = balance
 
-    def split(self, X, y, groups, **kwargs):
-        class_balance = kwargs.get('balance', False)
+    def split(self, X, y, groups):
+        
+        encoder = LabelEncoder()
+        y = encoder.fit_transform(y)
+        groups = encoder.fit_transform(groups)
         k = self.k #number of splits
         seed = self.random_state #random state
         labels_num = np.max(y) + 1 # number of class labels
@@ -241,7 +246,7 @@ class StratifiedGroupKFold:
             fold_indices.append([i for i, g in enumerate(groups) if g in test_groups])
             
             #train_indices = group_ind[test_indices != group_ind]
-            if class_balance:
+            if self.balance:
                 #print(y_counts_per_fold[i])
                 num_y = int(np.min(y_counts_per_fold[i]))
                 #print(num_y)
@@ -251,7 +256,7 @@ class StratifiedGroupKFold:
                     label_indices = list(compress(fold_indices[i], y[fold_indices[i]] == cl))
                     #print(num_y)
                     
-                    label_indices = random.sample(label_indices,num_y)
+                    label_indices = random.Random(seed).sample(label_indices,num_y)
                     
                     new_fold_indices = new_fold_indices + label_indices
                 #print(len(new_fold_indices[1]))    

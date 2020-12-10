@@ -33,7 +33,7 @@ class Truncate( BaseEstimator , TransformerMixin ):
             for region in self.remove: 
 
                 pos, val = find_value(region, X.columns.values)
-                X.drop(X.columns[int(pos[0]):int(pos[1])], axis = 1, inplace = True)
+                X = X.drop(X.columns[int(pos[0]):int(pos[1])], axis = 1)
 
         if self.ends == "fingerprint":
                    

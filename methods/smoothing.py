@@ -7,7 +7,6 @@ from sklearn.decomposition import PCA
 from .utils import IdentityTransformer
 from sklearn.base import TransformerMixin, BaseEstimator
 
-
 def MakeTransformer(method, **kwargs):
 
     transformers = {

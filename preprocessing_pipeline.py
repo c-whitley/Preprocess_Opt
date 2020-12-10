@@ -147,10 +147,10 @@ class Pipeline_Opt:
 #----------------------------------------------------------------------------------------------------------------------------------
 class BayesOptimiser():
 
-    def __init__(self, address):
+    def __init__(self, address, **kwargs):
 
         
-        self.order = ['binning', 'smoothing', 'normalise','baseline','FeaSelect','FeaExtraction', 'Classifier']
+        self.order = kwargs.get("order", ['binning', 'smoothing','FeaSelect','baseline','normalise','FeaExtraction', 'Classifier'])
         self.mods = {
             'binning':binning, 
             'smoothing': smoothing,
@@ -199,27 +199,36 @@ class BayesOptimiser():
         random_state_split = kwargs.get('random_state_split', None)
         split_ob = kwargs.get('split_ob', 5)
         n_jobs = kwargs.get('n_jobs', -1)
+        scoring = kwargs.get("scoring", "roc_auc")
+        self.group = kwargs.get("group","patient")
         
         print(self.pipeline)
         print(self.params)
 
         if not isinstance(split_ob, int):
-            self.ind_gen = list(utils.Split(X, y, split_ob = split_ob, group = 'patient', random_state = random_state_split))
+            self.ind_gen = list(split_ob.split(X, y, X.index.get_level_values(self.group)))
+            #list(utils.Split(X, y, split_ob = split_ob, group = 'patient', random_state = random_state_split))
         else: 
             self.ind_gen = split_ob
         
         if self.params:
-            self.opt_func = skopt.BayesSearchCV(self.pipeline, self.params, n_iter = n_iter, n_points = n_points, random_state=random_state, cv = self.ind_gen, verbose = 1, n_jobs = n_jobs)
+            self.opt_func = skopt.BayesSearchCV(self.pipeline, self.params, n_iter = n_iter, n_points = n_points, random_state=random_state, cv = self.ind_gen, verbose = 1, n_jobs = n_jobs, scoring = scoring)
             self.opt_func.fit(X, y)
             self.score = self.opt_func.best_score_
             print(self.score)
         else: 
             print('No parameter space to search. Performing standard cross validation instead')
-            self.score = model_selection.cross_val_score(self.pipeline, X, y,  scoring = 'roc_auc', cv = self.ind_gen)
+            self.score = model_selection.cross_val_score(self.pipeline, X, y,  scoring = scoring, cv = self.ind_gen)
             print(self.score)
         #print(self.opt_func.best_params_)
+
+    def test_best(self, X, y):
         
-     
+        y_pred = self.opt_func.best_estimator_.predict(X)
+        self.test_cm = metrics.confusion_matrix(y, y_pred)
+        self.test_score = (self.test_cm[0,0]/(self.test_cm[0,0] + self.test_cm[0,1]))*(self.test_cm[1,1]/(self.test_cm[1,1] + self.test_cm[1,0]))
+
+        return self.test_score
 
 
 
