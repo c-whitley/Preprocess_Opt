@@ -16,7 +16,7 @@ def MakeTransformer(method, **kwargs):
 
 class Truncate( BaseEstimator , TransformerMixin ): 
 
-    def __init__(self, remove = [(1340,1490), (2300,2400), (2700,3000)], ends = "fingerprint"): 
+    def __init__(self, remove = [(1340,1490)], ends = "fingerprint"): 
 
 
         self.remove = remove

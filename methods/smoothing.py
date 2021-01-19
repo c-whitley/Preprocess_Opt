@@ -31,7 +31,7 @@ def getTransformers():
 
 class savgol(TransformerMixin, BaseEstimator):
 
-    def __init__(self, window = 7, polyorder = 3, **kwargs): 
+    def __init__(self, window = 7, polyorder = 2, **kwargs): 
 
         self.window = window
         self.polyorder = polyorder

@@ -42,7 +42,7 @@ class Kohler( BaseEstimator, TransformerMixin):
 
         # Use the columns of the dataframe as the wavenumbers
         wavenumbers = X.columns
-
+        print(type(wavenumbers))
         #self.X=X
 
         #print(self.X[0,:].shape)

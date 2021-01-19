@@ -186,6 +186,7 @@ class StratifiedGroupKFold:
         encoder = LabelEncoder()
         y = encoder.fit_transform(y)
         groups = encoder.fit_transform(groups)
+        #print(y, groups)
         k = self.k #number of splits
         seed = self.random_state #random state
         labels_num = np.max(y) + 1 # number of class labels
@@ -243,8 +244,10 @@ class StratifiedGroupKFold:
             test_groups = groups_per_fold[i]
 
             #train_indices = [i for i, g in enumerate(groups) if g in train_groups]
+            #print(np.unique(groups))
             fold_indices.append([i for i, g in enumerate(groups) if g in test_groups])
-            
+            #print(max([i for i, g in enumerate(groups) if g in test_groups]))
+            #print(np.max(fold_indices))
             #train_indices = group_ind[test_indices != group_ind]
             if self.balance:
                 #print(y_counts_per_fold[i])
@@ -266,8 +269,9 @@ class StratifiedGroupKFold:
         for i in range(k): 
 
             test_indices = fold_indices[i]
+            #print(max(test_indices))
             train_indices = list(chain.from_iterable([fold_indices[j] for j in range(k) if j is not i]))
-
+            #print(max(train_indices))
             yield train_indices, test_indices
             #yield train_indices, test_indices
 
