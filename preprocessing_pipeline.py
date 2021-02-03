@@ -219,15 +219,6 @@ class BayesOptimiser():
             print(self.score)
         #print(self.opt_func.best_params_)
         
-     
-
-
-
-
-        
-
-
-
 
 class BruteForceGenerator:
     """
