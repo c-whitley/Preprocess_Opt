@@ -5,7 +5,6 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.preprocessing import FunctionTransformer
 from .utils import IdentityTransformer
 
-
 def MakeTransformer(method, **kwargs):
 
     transformers = {

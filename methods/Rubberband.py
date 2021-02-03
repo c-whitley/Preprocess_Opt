@@ -10,7 +10,6 @@ import multiprocessing as mp
 
 from sklearn.base import BaseEstimator, TransformerMixin
 
-
 class Rubber_Band( BaseEstimator, TransformerMixin ):
     """
     Applies a rubber band correction to the input matrix of spectra.

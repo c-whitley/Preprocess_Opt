@@ -10,7 +10,6 @@ from sklearn.decomposition import PCA
 from scipy.signal import hilbert
 from scipy.spatial import ConvexHull
 from .utils import IdentityTransformer
-
 def MakeTransformer(method, **kwargs): 
 
     transformers = {

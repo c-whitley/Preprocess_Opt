@@ -16,7 +16,7 @@ def MakeTransformer(method, **kwargs):
 
 class Truncate( BaseEstimator , TransformerMixin ): 
 
-    def __init__(self, remove = [(1340,1490), (2300,2400), (2700,3000)], ends = "fingerprint"): 
+    def __init__(self, remove = [(1340,1490)], ends = "fingerprint"): 
 
 
         self.remove = remove
@@ -33,7 +33,7 @@ class Truncate( BaseEstimator , TransformerMixin ):
             for region in self.remove: 
 
                 pos, val = find_value(region, X.columns.values)
-                X.drop(X.columns[int(pos[0]):int(pos[1])], axis = 1, inplace = True)
+                X = X.drop(X.columns[int(pos[0]):int(pos[1])], axis = 1)
 
         if self.ends == "fingerprint":
                    
