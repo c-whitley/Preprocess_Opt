@@ -15,7 +15,7 @@ cmap_cv = plt.cm.coolwarm
 n_splits = 4
 from collections import Counter, defaultdict
 from itertools import compress,chain
-
+from sklearn.utils import resample
 class IdentityTransformer(TransformerMixin, BaseEstimator):
     
     def __init__(self, **kwargs): 
@@ -89,6 +89,18 @@ def find_value(value, wavenumbers):
     
     
     return pos, val
+
+def cm_stats(cm, posclass = 1):
+    out = {}
+    negclass = (posclass - 1)**2
+    
+    out["sens"] = cm[posclass,posclass]/(cm[posclass,posclass] + cm[posclass,negclass])
+    out["spec"] = cm[negclass,negclass]/(cm[negclass,posclass] + cm[negclass,negclass])
+    out["PPV"] = cm[posclass,posclass]/(cm[posclass,posclass] + cm[negclass,posclass])
+    out["NPV"] = cm[negclass,negclass]/(cm[negclass,negclass] + cm[posclass,negclass])
+    out["PAC"] = (cm[negclass,negclass] + cm[posclass,posclass])/np.sum(cm)
+    out["MCC"] = (cm[posclass,posclass]*cm[negclass,negclass] - cm[negclass,posclass]*cm[posclass,negclass])/np.sqrt((cm[posclass,posclass] + cm[negclass,posclass])*(cm[posclass,posclass]+cm[posclass,negclass])*(cm[negclass,negclass] + cm[negclass,posclass])*(cm[negclass,negclass] + cm[posclass,negclass]))
+    return out
 
 def find_value_num(value, vector): 
     pos = np.argmin(abs(vector.values - value))
@@ -172,6 +184,41 @@ def visualize_groups(classes, groups, name):
                lw=50, cmap=cmap_data)
     ax.set(ylim=[-1, 5], yticks=[.5, 3.5],
            yticklabels=['Data\ngroup', 'Data\nclass'], xlabel="Sample index")
+
+class BootstrapCV: 
+
+    def __init__(self, k, random_state = 1): 
+        
+        self.k = k
+        self.random_state = random_state
+
+    def split(self, X, y, group): 
+
+        #Input y and group index names rather than lists
+        random.seed(self.random_state)
+        group_list = {grade: df.index.unique(group) for grade, df in X.groupby(y, as_index = False)}
+        
+        test_idx = [[] for _ in range(self.k)]
+        train_idx = [[] for _ in range(self.k)]
+
+        randlist = [random.randint(1,1000) for _ in range(self.k)]
+        for j in range(self.k):
+            
+            boot = [resample(x, replace = True, n_samples = int(0.9*len(x)), random_state = randlist[j]) for x in group_list.values()]
+            train_patient = list(boot[0]) + list(boot[1])
+            #print(train_patient)
+            test_patient = [x for x in X.index.unique(group) if x not in train_patient]
+
+            for patient in test_patient:
+
+                test_idx[j] += [i for i, x in enumerate(X.index.get_level_values(group) == patient) if x]
+
+            for patient in train_patient: 
+
+                train_idx[j] += [i for i, x in enumerate(X.index.get_level_values(group) == patient) if x]
+
+            
+        return list(zip(train_idx, test_idx))
 
 class StratifiedGroupKFold:
 

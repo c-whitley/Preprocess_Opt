@@ -8,14 +8,11 @@ import os
 import sys
 from tqdm.notebook import tqdm
 import dill
-<<<<<<< HEAD
 import glob
 import matplotlib.pyplot as plt
-=======
 
 import shutil
 
->>>>>>> d77e7441ab853fce6f49edbd6bf631086dae9124
 
 class Condor_Job_Pipeline: 
 

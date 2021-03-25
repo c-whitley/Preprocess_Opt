@@ -14,8 +14,10 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.ensemble import RandomForestClassifier as RF
 from sklearn import model_selection 
 from sklearn import metrics
+from sklearn.utils import resample
 import skopt
-
+from sklearn.base import clone
+from tqdm import tqdm
 from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils, FeaSelect
 
 
@@ -201,12 +203,16 @@ class BayesOptimiser():
         n_jobs = kwargs.get('n_jobs', -1)
         scoring = kwargs.get("scoring", "roc_auc")
         self.group = kwargs.get("group","patient")
+        self.target = kwargs.get("target", "outcome")
         
         print(self.pipeline)
         print(self.params)
 
         if not isinstance(split_ob, int):
-            self.ind_gen = list(split_ob.split(X, y, X.index.get_level_values(self.group)))
+            if isinstance(split_ob, list):
+                self.ind_gen = split_ob
+            else:
+                self.ind_gen = list(split_ob.split(X, y, X.index.get_level_values(self.group)))
             #list(utils.Split(X, y, split_ob = split_ob, group = 'patient', random_state = random_state_split))
         else: 
             self.ind_gen = split_ob
@@ -215,22 +221,91 @@ class BayesOptimiser():
             self.opt_func = skopt.BayesSearchCV(self.pipeline, self.params, n_iter = n_iter, n_points = n_points, random_state=random_state, cv = self.ind_gen, verbose = 1, n_jobs = n_jobs, scoring = scoring, return_train_score=True)
             self.opt_func.fit(X, y)
             self.score = self.opt_func.best_score_
-            print(self.score)
+            #print(self.score)
         else: 
             print('No parameter space to search. Performing standard cross validation instead')
-            self.score = model_selection.cross_val_score(self.pipeline, X, y,  scoring = scoring, cv = self.ind_gen)
-            
-            print(self.score)
+            self.score = model_selection.cross_validate(self.pipeline, X, y, scoring = scoring, cv = self.ind_gen)
+            #self.score = model_selection.cross_val_score(self.pipeline, X, y,  scoring = scoring, cv = self.ind_gen)
+            self.pipeline.fit(X, y)
+            #print(self.score)
         #print(self.opt_func.best_params_)
+
+    def evaluate_metrics(self, X, y, **kwargs):
+        #Takes the best pipeline and does another cross validation to acquire performance metrics
+        if self.params: 
+            cl = clone(self.opt_func.best_estimator_)
+        else: 
+            cl = clone(self.pipeline)
+        scoring = kwargs.get("scoring", "roc_auc")
+        
+        #for i, (train, test) in enumerate(self.ind_gen): 
+            
+         #   cl.fit(X.iloc[train,:], y[train])
+            
+
+
+        self.metrics = model_selection.cross_validate(cl, X, y, scoring = scoring, cv = self.ind_gen, n_jobs=-1, return_train_score=True)
+        
+        return self.metrics
+
+    def bootstrap(self, X, y, group, pos_neg, n_it = 100, **kwargs): 
+
+        if self.params: 
+            cl = clone(self.opt_func.best_estimator_)
+        else: 
+            cl = clone(self.pipeline)
+
+        group_list = {grade: df.index.unique(group) for grade, df in X.groupby(self.target, as_index = False)}
+        #print(group_list["T"])
+    
+        self.bootstrap_results = {"test_patients": [], "train_patients": [], "ROC"  :[], "AUC": [],
+                                    "sens": [], "spec": [], "ppv": [], "npv": [], "PR": []}
+        for i in tqdm(range(n_it)):
+            boot = [resample(x, replace = True, n_samples = int(0.9*len(x))) for x in group_list.values()]
+            train_patient = list(boot[0]) + list(boot[1])
+            #print(train_patient)
+            test_patient = [x for x in X.index.unique(group) if x not in train_patient]
+            test_idx = X.index.get_level_values(group).isin(test_patient)
+            train_idx = X.index.get_level_values(group).isin(train_patient)
+
+            cl.fit(X.loc[train_idx,:], y[train_idx])
+            y_pred = cl.predict(X.loc[test_idx,:])
+            y_score = cl.predict_proba(X.loc[test_idx,:])
+            y_true  = y[test_idx]
+            
+            
+            self.bootstrap_results["test_patients"].append(test_patient)
+            self.bootstrap_results["train_patients"].append(train_patient)
+            self.bootstrap_results["ROC"].append(metrics.roc_curve(y_true, y_score[:,1],pos_label = pos_neg[0]))
+            self.bootstrap_results["AUC"].append(metrics.roc_auc_score(y_true, y_score[:,1]))
+            self.bootstrap_results["sens"].append(metrics.recall_score(y_true, y_pred, pos_label = pos_neg[0]))
+            self.bootstrap_results["spec"].append(metrics.recall_score(y_true, y_pred, pos_label = pos_neg[1]))
+            self.bootstrap_results["ppv"].append(metrics.precision_score(y_true, y_pred, pos_label = pos_neg[0]))
+            self.bootstrap_results["npv"].append(metrics.precision_score(y_true, y_pred, pos_label = pos_neg[1]))
+            self.bootstrap_results["PR"].append(metrics.precision_recall_curve(y_true, y_score[:,1], pos_label = pos_neg[0]))
+           
+
+
+
 
     def test_best(self, X, y):
          
-        y_pred = self.opt_func.best_estimator_.predict(X)
+        if self.params:
+                  
+            y_pred = self.opt_func.best_estimator_.predict(X)
+        
+        else: 
+
+            y_pred = self.pipeline.predict(X)
         
         self.test_cm = metrics.confusion_matrix(y, y_pred)
-        self.test_score = (self.test_cm[0,0]/(self.test_cm[0,0] + self.test_cm[0,1]))*(self.test_cm[1,1]/(self.test_cm[1,1] + self.test_cm[1,0]))
+        #self.test_score = (self.test_cm[0,0]/(self.test_cm[0,0] + self.test_cm[0,1]))*(self.test_cm[1,1]/(self.test_cm[1,1] + self.test_cm[1,0]))
+        
+        return self.test_cm, self.test_scores
 
-        return self.test_score
+    def test_scores(self, posclass = 1): 
+        
+        self.test_scores = utils.cm_stats(self.test_cm, posclass=posclass)
 
 
 
