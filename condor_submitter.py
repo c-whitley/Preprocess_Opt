@@ -17,7 +17,8 @@ import shutil
 class Condor_Job_Pipeline: 
 
     def __init__(self, name, iterable, function, dependencies, jobdir=None):
-        """Class to submit a condor pipeline 
+        """
+        Class to submit a condor pipeline 
 
         Args:
             name (str): Name of the function to be used on the condor node.
@@ -46,6 +47,7 @@ class Condor_Job_Pipeline:
         else: 
             print("caution: directory already exists")
         print(os.getcwd())
+        
     def prepare(self, X, n = None):
 
         for i, address in enumerate(self.iterable):
@@ -95,7 +97,7 @@ class Condor_Job_Pipeline:
         with open("condor_scorer.bat","r+") as f:
 
             lines = f.readlines()
-            lines[33] = "dependencies.zip\n"
+            lines[33] = "./dependencies.zip\n"
             f.writelines(lines)
         
         #os.system("condor_submit condor_scorer.sub")
