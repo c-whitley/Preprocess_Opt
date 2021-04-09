@@ -8,9 +8,9 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 def MakeTransformer(method, **kwargs):
 
     transformers = {
-        'LogisticRegression': LogisticRegression(), 
+        'LogisticRegression': LogisticRegression(class_weight="balanced"), 
         'Naive Bayes': GaussianNB(),
-        'Random Forest': RandomForestClassifier(), 
+        'Random Forest': RandomForestClassifier(class_weight="balanced"), 
         'XGBoost': xgb.XGBClassifier(),
         'LDA': LinearDiscriminantAnalysis()
     }

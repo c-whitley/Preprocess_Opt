@@ -149,7 +149,7 @@ class Pipeline_Opt:
 #----------------------------------------------------------------------------------------------------------------------------------
 class BayesOptimiser():
 
-    def __init__(self, address, **kwargs):
+    def __init__(self, address, identifier, **kwargs):
 
         
         self.order = kwargs.get("order", ['binning', 'smoothing','FeaSelect','baseline','normalise','FeaExtraction', 'Classifier'])
@@ -165,6 +165,7 @@ class BayesOptimiser():
 
         self.address = collections.OrderedDict({key: address[key] for key in self.order})
         self.MakePipelineBayes()
+        self.identifier = identifier
         
     def MakePipelineBayes(self):
 
@@ -221,6 +222,7 @@ class BayesOptimiser():
             self.opt_func = skopt.BayesSearchCV(self.pipeline, self.params, n_iter = n_iter, n_points = n_points, random_state=random_state, cv = self.ind_gen, verbose = 1, n_jobs = n_jobs, scoring = scoring, return_train_score=True)
             self.opt_func.fit(X, y)
             self.score = self.opt_func.best_score_
+            self.pipeline = self.opt_func.best_estimator_
             #print(self.score)
         else: 
             print('No parameter space to search. Performing standard cross validation instead')
@@ -232,10 +234,10 @@ class BayesOptimiser():
 
     def evaluate_metrics(self, X, y, **kwargs):
         #Takes the best pipeline and does another cross validation to acquire performance metrics
-        if self.params: 
-            cl = clone(self.opt_func.best_estimator_)
-        else: 
-            cl = clone(self.pipeline)
+        #if self.params: 
+         #   cl = clone(self.opt_func.best_estimator_)
+        #else: 
+        cl = clone(self.pipeline)
         scoring = kwargs.get("scoring", "roc_auc")
         
         #for i, (train, test) in enumerate(self.ind_gen): 
@@ -244,7 +246,7 @@ class BayesOptimiser():
             
 
 
-        self.metrics = model_selection.cross_validate(cl, X, y, scoring = scoring, cv = self.ind_gen, n_jobs=-1, return_train_score=True)
+        self.metrics = model_selection.cross_validate(cl, X, y, scoring = scoring, cv = self.ind_gen, n_jobs=1, return_train_score=True)
         
         return self.metrics
 
@@ -288,24 +290,33 @@ class BayesOptimiser():
 
 
 
-    def test_best(self, X, y):
+    def test_best(self, X, y, pos_label):
          
-        if self.params:
+        #if self.params:
                   
-            y_pred = self.opt_func.best_estimator_.predict(X)
-        
-        else: 
+         #   y_pred = self.opt_func.best_estimator_.predict(X)
+         #   y_proba = self.opt_func.best_estimator_.predict_proba(X)
+        #else: 
 
-            y_pred = self.pipeline.predict(X)
+        pos_index = np.where(self.pipeline.classes_ == pos_label)[0][0]
+
+        y_pred = self.pipeline.predict(X)
+        y_proba = self.pipeline.predict_proba(X)
         
         self.test_cm = metrics.confusion_matrix(y, y_pred)
         #self.test_score = (self.test_cm[0,0]/(self.test_cm[0,0] + self.test_cm[0,1]))*(self.test_cm[1,1]/(self.test_cm[1,1] + self.test_cm[1,0]))
         
-        return self.test_cm, self.test_scores
+        
+        self.test_scores()
+        
+        
+        self.test_scores_["ROC"] = metrics.roc_curve(y, y_proba[:,pos_index], pos_label=pos_label)
+        self.test_scores_["AUC"] = metrics.roc_auc_score(y, y_proba[:,pos_index])
+        #return self.test_cm, self.test_scores
 
     def test_scores(self, posclass = 1): 
         
-        self.test_scores = utils.cm_stats(self.test_cm, posclass=posclass)
+        self.test_scores_ = utils.cm_stats(self.test_cm, posclass=posclass)
 
 
 

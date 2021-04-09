@@ -100,6 +100,12 @@ def cm_stats(cm, posclass = 1):
     out["NPV"] = cm[negclass,negclass]/(cm[negclass,negclass] + cm[posclass,negclass])
     out["PAC"] = (cm[negclass,negclass] + cm[posclass,posclass])/np.sum(cm)
     out["MCC"] = (cm[posclass,posclass]*cm[negclass,negclass] - cm[negclass,posclass]*cm[posclass,negclass])/np.sqrt((cm[posclass,posclass] + cm[negclass,posclass])*(cm[posclass,posclass]+cm[posclass,negclass])*(cm[negclass,negclass] + cm[negclass,posclass])*(cm[negclass,negclass] + cm[posclass,negclass]))
+    
+    for s,v in out.items():
+        
+        if np.isnan(v):
+            out[s] = 0
+    
     return out
 
 def find_value_num(value, vector): 
@@ -184,6 +190,41 @@ def visualize_groups(classes, groups, name):
                lw=50, cmap=cmap_data)
     ax.set(ylim=[-1, 5], yticks=[.5, 3.5],
            yticklabels=['Data\ngroup', 'Data\nclass'], xlabel="Sample index")
+
+class StratifiedGroupSample:
+
+    def __init__(self, k, random_state = 1): 
+
+        self.k = k 
+        self.random_state = random_state
+
+    def split(self, X, y, group): 
+
+        random.seed(self.random_state)
+        group_list = {grade: df.index.unique(group) for grade, df in X.groupby(y, as_index = False)}
+
+        test_idx = [[] for _ in range(self.k)]
+        train_idx = [[] for _ in range(self.k)]
+
+        randlist = [random.randint(1,1000) for _ in range(self.k)]
+
+        for j in range(self.k):
+
+            test_patient = [resample(x, replace = False, n_samples = int(len(x)/3), random_state = randlist[j]) for x in group_list.values()]
+            test_patient = list(test_patient[0]) + list(test_patient[1])
+
+            train_patient = [x for x in X.index.unique(group) if x not in test_patient]
+
+            for patient in test_patient:
+
+                test_idx[j] += [i for i, x in enumerate(X.index.get_level_values(group) == patient) if x]
+
+            for patient in train_patient: 
+
+                train_idx[j] += [i for i, x in enumerate(X.index.get_level_values(group) == patient) if x]
+
+            
+        return list(zip(train_idx, test_idx))
 
 class BootstrapCV: 
 
