@@ -18,7 +18,7 @@ from sklearn.utils import resample
 import skopt
 from sklearn.base import clone
 from tqdm import tqdm
-from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils, FeaSelect
+from methods import binning, normalise, smoothing, baseline, FeaExtraction, Classifier, utils, FeaSelect, scaling
 
 
 class Pipeline_Opt:
@@ -152,11 +152,12 @@ class BayesOptimiser():
     def __init__(self, address, identifier, **kwargs):
 
         
-        self.order = kwargs.get("order", ['binning', 'smoothing','FeaSelect','baseline','normalise','FeaExtraction', 'Classifier'])
+        self.order = kwargs.get("order", ['binning', 'smoothing','FeaSelect','baseline','normalise','scaling','FeaExtraction', 'Classifier'])
         self.mods = {
             'binning':binning, 
             'smoothing': smoothing,
             'normalise': normalise,
+            'scaling': scaling,
             'baseline': baseline,
             "FeaSelect": FeaSelect, 
             'FeaExtraction': FeaExtraction,
