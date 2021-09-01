@@ -12,7 +12,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.ensemble import RandomForestClassifier as RF
-from sklearn import model_selection 
+from sklearn import model_selection, metrics, preprocessing
 from sklearn import metrics
 from sklearn.utils import resample
 import skopt
@@ -291,7 +291,7 @@ class BayesOptimiser():
 
 
 
-    def test_best(self, X, y, pos_label):
+    def test_best(self, X, y, labels, poslabel):
          
         #if self.params:
                   
@@ -299,7 +299,7 @@ class BayesOptimiser():
          #   y_proba = self.opt_func.best_estimator_.predict_proba(X)
         #else: 
 
-        pos_index = np.where(self.pipeline.classes_ == pos_label)[0][0]
+        #pos_index = np.where(self.pipeline.classes_ == pos_label)[0][0]
 
         y_pred = self.pipeline.predict(X)
         y_proba = self.pipeline.predict_proba(X)
@@ -307,17 +307,59 @@ class BayesOptimiser():
         self.test_cm = metrics.confusion_matrix(y, y_pred)
         #self.test_score = (self.test_cm[0,0]/(self.test_cm[0,0] + self.test_cm[0,1]))*(self.test_cm[1,1]/(self.test_cm[1,1] + self.test_cm[1,0]))
         
+        pos_idx = labels.index(poslabel)
         
-        self.test_scores()
-        
-        
-        self.test_scores_["ROC"] = metrics.roc_curve(y, y_proba[:,pos_index], pos_label=pos_label)
-        self.test_scores_["AUC"] = metrics.roc_auc_score(y, y_proba[:,pos_index])
+        if len(labels) == 2: 
+
+
+            self.test_scores(labels, posclass = poslabel)
+            self.test_scores_["ROC"] = metrics.roc_curve(y, y_proba[:,pos_idx], pos_label=poslabel)
+            self.test_scores_["AUC"] = metrics.roc_auc_score(y, y_proba[:,pos_idx])
+
+        elif len(labels) > 2:
+            #y_binary = np.zeros(len(y))
+            #y_binary[y == poslabel] = 1
+            #self.multiclass_test_scores(y, y_pred, labels, poslabel) 
+            #self.test_scores_["ROC"] = metrics.roc_curve(y_binary, y_proba[:,pos_idx])
+            self.test_scores_ = {}
+            #recall = 
+            #self.test_scores_ = {name: scores for name,scores in zip(["precision", "recall", "F1", "support"], metrics.precision_recall_fscore_support(y, y_pred, labels = labels, average = "weighted"))}
+            lb = preprocessing.LabelBinarizer()
+            y_binary = lb.fit_transform(y)
+            
+            self.test_scores_ = metrics.classification_report(y, y_pred, labels = labels, output_dict=True)
+            self.test_scores_["AUC"] = metrics.roc_auc_score(y, y_proba, average  = "macro", multi_class="ovr")
+            self.test_scores_["ROC"] = {cl: metrics.roc_curve(y_binary[:,i], y_proba[:,i]) for i,cl in enumerate(lb.classes_)} 
+
+
         #return self.test_cm, self.test_scores
 
-    def test_scores(self, posclass = 1): 
+    def test_scores(self, labels, posclass): 
         
-        self.test_scores_ = utils.cm_stats(self.test_cm, posclass=posclass)
+
+        pos_idx = labels.index(posclass)
+        self.test_scores_ = utils.cm_stats(self.test_cm,  posclass=pos_idx)
+
+    def multiclass_test_scores(self, y, y_pred, labels, posclass): 
+
+        
+        out = {}
+        
+        
+        out["sens"] = utils.multiclass_recall(y, y_pred, poslabel=posclass, labels = labels)
+        out["spec"] = utils.multiclass_specificity(y, y_pred, poslabel=posclass, labels = labels)
+        out["PPV"] = utils.multiclass_ppv(y, y_pred, poslabel=posclass, labels = labels)
+        out["NPV"] = utils.multiclass_npv(y, y_pred, poslabel=posclass, labels = labels)
+        out["PAC"] = metrics.accuracy_score(y, y_pred)
+        out["MCC"] = metrics.matthews_corrcoef(y, y_pred)
+        #out["MCC"] = (cm[posclass,posclass]*cm[negclass,negclass] - cm[negclass,posclass]*cm[posclass,negclass])/np.sqrt((cm[posclass,posclass] + cm[negclass,posclass])*(cm[posclass,posclass]+cm[posclass,negclass])*(cm[negclass,negclass] + cm[negclass,posclass])*(cm[negclass,negclass] + cm[posclass,negclass]))
+        
+        for s,v in out.items():
+            
+            if np.isnan(v):
+                out[s] = 0
+        
+        self.test_scores_ = out
 
 
 

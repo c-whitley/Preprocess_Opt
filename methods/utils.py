@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn import model_selection, preprocessing
+from sklearn import model_selection, preprocessing, metrics
 from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,
                                      StratifiedKFold, GroupShuffleSplit,
                                      GroupKFold, StratifiedShuffleSplit)
@@ -193,10 +193,11 @@ def visualize_groups(classes, groups, name):
 
 class StratifiedGroupSample:
 
-    def __init__(self, k, random_state = 1): 
+    def __init__(self, k, random_state = 1, test_ratio = 0.3): 
 
         self.k = k 
         self.random_state = random_state
+        self.test_ratio = test_ratio
 
     def split(self, X, y, group): 
 
@@ -210,7 +211,7 @@ class StratifiedGroupSample:
 
         for j in range(self.k):
 
-            test_patient = [resample(x, replace = False, n_samples = int(len(x)/3), random_state = randlist[j]) for x in group_list.values()]
+            test_patient = [resample(x, replace = False, n_samples = int(len(x)*self.test_ratio), random_state = randlist[j]) for x in group_list.values()]
             test_patient = list(test_patient[0]) + list(test_patient[1])
 
             train_patient = [x for x in X.index.unique(group) if x not in test_patient]
@@ -365,3 +366,47 @@ class StratifiedGroupKFold:
 
     def get_n_splits(self, X, y, groups=None):
         return self.n_splits
+
+def custom_scorer(y_true, y_pred): 
+    cm = metrics.confusion_matrix(y_true, y_pred)
+    score = (cm[0,0]/(cm[0,0] + cm[0,1]))*(cm[1,1]/(cm[1,1] + cm[1,0]))
+    return score
+
+def multiclass_specificity(y_true, y_pred, poslabel = None, labels = None): 
+    
+  
+    label_idx = np.arange(len(labels))
+    pos_idx = labels.index(poslabel)
+    neg_idx = np.delete(label_idx,pos_idx)
+
+    cm = metrics.confusion_matrix(y_true, y_pred, labels = labels)
+    tn = np.sum(cm[neg_idx, neg_idx])
+    fp = np.sum(cm[neg_idx, pos_idx])
+
+    return tn/(tn+fp)
+
+def multiclass_npv(y_true, y_pred, labels = None, poslabel = None): 
+
+    label_idx = np.arange(len(labels))
+    pos_idx = labels.index(poslabel)
+    neg_idx = np.delete(label_idx,pos_idx)
+
+    cm = metrics.confusion_matrix(y_true, y_pred, labels = labels)
+    tn = np.sum(cm[neg_idx, neg_idx])
+    fn = np.sum(cm[pos_idx, neg_idx])
+
+    return tn/(tn+fn)
+
+def multiclass_recall(y_true, y_pred, poslabel = None, labels = None): 
+
+    pos_idx = labels.index(poslabel)
+    recalls = metrics.recall_score(y_true, y_pred, labels = labels, average = None)
+
+    return recalls[pos_idx]
+
+def multiclass_ppv(y_true, y_pred, poslabel = None, labels = None): 
+
+    pos_idx = labels.index(poslabel)
+    precisions = metrics.precision_score(y_true, y_pred, labels = labels, average = None)
+
+    return precisions[pos_idx]
